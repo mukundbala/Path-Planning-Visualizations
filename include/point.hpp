@@ -3,6 +3,7 @@
 #include <string>
 #include <cassert>
 #include <math.h>
+#include<iostream>
 #include <SFML/Graphics.hpp>
 
 
@@ -57,7 +58,15 @@ public:
    double mag()const;
    double mag(Vec2D& other_point)const;
 
+   void normalize();
+   Vec2D normalize()const;
+   
    double dot (Vec2D& rhs)const;
+
+   Vec2D SFV2fToVec2D(sf::Vector2f& vec)const;
+   sf::Vector2f Vec2DToSFV2f()const; 
+
+   void print()const;
 
 };
 
