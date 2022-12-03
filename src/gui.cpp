@@ -7,6 +7,7 @@ AppData::AppData()
     loader=YAML::LoadFile("config/planners.yaml");
     continuous_planners=loader["continuous_planner"].as<std::vector<std::string>>();
     discrete_planners=loader["discrete_planner"].as<std::vector<std::string>>();
+    resolution_=std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
     std::cout<<"[AppData]: List of planners loaded!\n";
 }
 
@@ -262,28 +263,103 @@ void PlannerGUI::runObstacleSelector()
     gui_window_selector_.create(sf::VideoMode(selector_window_size_.x,selector_window_size_.y,32),"Selector GUI");
     gui_backend_selector_.setTarget(gui_window_selector_);
     
-    Actions next=Actions::NotStarted;
-    Actions prev=Actions::NotStarted;
+    Actions state=Actions::NotStarted;
     
     sf::Clock selector_clock; // check how long the mouse has be held
     bool pos_mouse = 0;
-    bool neg_mouse = 0;
-    sf::Time pos_mouse_time=sf::milliseconds(0);
-    sf::Time neg_mouse_time=sf::milliseconds(0);
+    sf::Int32 pos_mouse_time = 0;
+    sf::Int32 neg_mouse_time = 0;
+    sf::Vector2f pos_mouse_pos = {-1,-1};
+    sf::Vector2f neg_mouse_pos = {-1,-1};
+    
     while (gui_window_selector_.isOpen())
     {
         sf::Event event;
         while (gui_window_selector_.pollEvent(event))
         {
             gui_backend_selector_.handleEvent(event);
-            if (event.type==sf::Event::Closed)
+            if (event.type == sf::Event::Closed)
             {
                 gui_window_selector_.close();
             }
 
-            if (event.type ==sf::Event::MouseButtonPressed)
+            if (event.type == sf::Event::MouseButtonPressed && !pos_mouse) 
             {
-                
+                if ((state == Actions::DrawCircle || state==Actions::DrawRectangle) && 
+                    event.mouseButton.x > 200 && 
+                    event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
+                    event.mouseButton.y >= 0 &&
+                    event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                {
+                    pos_mouse = true; //positive mouse press detected
+                    pos_mouse_time = selector_clock.getElapsedTime().asMilliseconds(); //record time
+                    pos_mouse_pos.x = event.mouseButton.x;
+                    pos_mouse_pos.y = event.mouseButton.y;
+                }
+            }
+
+            if (event.type==sf::Event::MouseButtonReleased && pos_mouse)
+            {
+                if ((state == Actions::DrawCircle || state == Actions::DrawRectangle) && 
+                    event.mouseButton.x > 200 && 
+                    event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
+                    event.mouseButton.y >= 0 &&
+                    event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                {
+                    neg_mouse_time = selector_clock.getElapsedTime().asMilliseconds();
+                    if (abs(neg_mouse_time - pos_mouse_time) >= 5)
+                    {
+                        //hold time must be about 5 milliseconds
+                        neg_mouse_pos.x=event.mouseButton.x;
+                        neg_mouse_pos.y=event.mouseButton.y;
+                        double dist_between= sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
+                                                    +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
+                        if (dist_between>=10)
+                        {
+                            if (state==Actions::DrawCircle)
+                            {
+                               CircleObstacle circ(dist_between/2,pos_mouse_pos);
+                               app_data_->circle_obs_array.array.emplace_back(circ);
+                               std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
+                            }
+                            else if (state==Actions::DrawRectangle)
+                            {
+                                sf::Vector2f size = {abs(pos_mouse_pos.x-neg_mouse_pos.x),abs(pos_mouse_pos.y-neg_mouse_pos.y)};
+
+                                if ( (pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
+                                {
+                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y / 2)));
+                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                }
+
+                                else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
+                                {
+                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
+                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                }
+
+                                else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
+                                {
+                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y/2)));
+                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                }
+
+                                else if ((pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
+                                {
+                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
+                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+                //reset everything before leaving this event
+                pos_mouse=0;
+                pos_mouse_time=0;
+                neg_mouse_time=0;
+                pos_mouse_pos = {-1,-1};
+                neg_mouse_pos = {-1,-1};
             }
         }
         gui_backend_selector_.removeAllWidgets();
@@ -293,7 +369,7 @@ void PlannerGUI::runObstacleSelector()
         circle_obs_button->setPosition(60,100);
         circle_obs_button->setText("Draw\nCircle");
         circle_obs_button->setTextSize(15);
-        circle_obs_button->onMousePress([&]{prev=next;next=Actions::DrawCircle;});
+        circle_obs_button->onMousePress([&]{state=Actions::DrawCircle;});
         gui_backend_selector_.add(circle_obs_button);
         
         auto rectangle_obs_button=tgui::Button::create();
@@ -301,51 +377,120 @@ void PlannerGUI::runObstacleSelector()
         rectangle_obs_button->setPosition(60,200);
         rectangle_obs_button->setText(" Draw\nRectangle");
         rectangle_obs_button->setTextSize(15);
-        rectangle_obs_button->onMousePress([&]{prev=next;next=Actions::DrawRectangle;});
+        rectangle_obs_button->onMousePress([&]{state=Actions::DrawRectangle;});
         gui_backend_selector_.add(rectangle_obs_button);
         
-        auto reset_last_obs_button=tgui::Button::create();
-        reset_last_obs_button->setSize(80,80);
-        reset_last_obs_button->setPosition(60,300);
-        reset_last_obs_button->setText("Reset\n Last");
-        reset_last_obs_button->setTextSize(15);
-        reset_last_obs_button->onMousePress([&]{if(next == Actions::NotStarted)
+        auto reset_last_circle_obs_button=tgui::Button::create();
+        reset_last_circle_obs_button->setSize(80,80);
+        reset_last_circle_obs_button->setPosition(60,300);
+        reset_last_circle_obs_button->setText("Reset\nLastCircle");
+        reset_last_circle_obs_button->setTextSize(15);
+        reset_last_circle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
                                                 {return;}
-                                                prev=next;
-                                                next=Actions::ResetLast;});
-        gui_backend_selector_.add(reset_last_obs_button);
+                                                state=Actions::ResetLastCircle;});
+        gui_backend_selector_.add(reset_last_circle_obs_button);
+
+        auto reset_last_rectangle_obs_button=tgui::Button::create();
+        reset_last_rectangle_obs_button->setSize(80,80);
+        reset_last_rectangle_obs_button->setPosition(60,400);
+        reset_last_rectangle_obs_button->setText("Reset\nLastRect");
+        reset_last_rectangle_obs_button->setTextSize(15);
+        reset_last_rectangle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
+                                                {return;}
+                                                state=Actions::ResetLastRectangle;});
+        gui_backend_selector_.add(reset_last_rectangle_obs_button);
         
         auto reset_all_obstacle_button=tgui::Button::create();
         reset_all_obstacle_button->setSize(80,80);
-        reset_all_obstacle_button->setPosition(60,400);
+        reset_all_obstacle_button->setPosition(60,500);
         reset_all_obstacle_button->setText("Reset\n All");
         reset_all_obstacle_button->setTextSize(15);
-        reset_all_obstacle_button->onMousePress([&]{if(next == Actions::NotStarted)
+        reset_all_obstacle_button->onMousePress([&]{if(state == Actions::NotStarted)
                                                 {return;}
-                                                prev=next;
-                                                next=Actions::ResetAll;});
+                                                state=Actions::ResetAll;});
         gui_backend_selector_.add(reset_all_obstacle_button);
         
+        auto done_button=tgui::Button::create();
+        done_button->setSize(80,80);
+        done_button->setPosition(60,600);
+        done_button->setText("Done");
+        done_button->setTextSize(15);
+        done_button->onMousePress([&]{if(state == Actions::NotStarted)
+                                                {return;}
+                                                state=Actions::Done;});
+        gui_backend_selector_.add(done_button);
+
+        if (state==Actions::ResetLastCircle)
+        {
+            
+            if (app_data_->circle_obs_array.array.size()>0)
+            {
+                app_data_->circle_obs_array.array.pop_back();
+                state=Actions::DrawCircle; //reset state
+                std::cout<<"[Obstacle Selector]: Circle Obstacles Removed!\n";
+            }
+            else 
+            {
+                std::cout<<"[Obstacle Selector]: No Circle Obstacles Left!\n";
+                state=Actions::DrawCircle; //reset state
+            }
+        }
+        
+        else if (state == Actions::ResetLastRectangle)
+        {
+            if (app_data_->rect_obs_array.array.size()>0)
+            {
+                app_data_->rect_obs_array.array.pop_back();
+                std::cout<<"[Obstacle Selector]: Rectangle Obstacles Removed!\n";
+                state=Actions::DrawRectangle;
+            }
+            else
+            {
+                std::cout<<"[Obstacle Selector]: No Rectangle Obstacles Left\n";
+                state=Actions::DrawRectangle; //reset state
+            }
+        }
+
+        else if (state == Actions::ResetAll)
+        {
+            if (app_data_->circle_obs_array.array.size()>0)
+            {
+                app_data_->circle_obs_array.array.clear();
+            }
+
+            if (app_data_->rect_obs_array.array.size()>0)
+            {
+                app_data_->rect_obs_array.array.clear();
+            }
+
+            std::cout<<"[Obstacle Selector]: Obstacle selections cleared!\n";
+            state=Actions::DrawCircle;
+
+        }
+        
+
+        for (const auto& circ_obs : app_data_->circle_obs_array.array)
+        {
+            gui_window_selector_.draw(circ_obs.shape);
+        }
+
+        for (const auto& rect_obs : app_data_->rect_obs_array.array)
+        {
+            gui_window_selector_.draw(rect_obs.shape);
+        }
+
         sf::RectangleShape rect_background;
         rect_background.setPosition(0,0);
         rect_background.setSize(sf::Vector2f(200,gui_window_selector_.getSize().y));
-        rect_background.setFillColor(sf::Color::Red);
+        rect_background.setFillColor(sf::Color::Yellow);
         gui_window_selector_.draw(rect_background);
         gui_backend_selector_.draw();
         gui_window_selector_.display();
         gui_window_selector_.clear(sf::Color::Black);
-        
-        std::cout<<"###\n";
-        if (prev==Actions::NotStarted){std::cout<<"Prev: NotStarted\n";}
-        else if (prev==Actions::DrawCircle){std::cout<<"Prev: DrawCircle\n";}
-        else if (prev==Actions::DrawRectangle){std::cout<<"Prev: DrawRectangle\n";}
-        else if (prev==Actions::ResetLast){std::cout<<"Prev: ResetLast\n";}
-        else if (prev==Actions::ResetAll){std::cout<<"Prev: ResetAll\n";} 
-
-        if (next==Actions::NotStarted){std::cout<<"Next: NotStarted\n";}
-        else if (next==Actions::DrawCircle){std::cout<<"Next: DrawCircle\n";}
-        else if (next==Actions::DrawRectangle){std::cout<<"Next: DrawRectangle\n";}
-        else if (next==Actions::ResetLast){std::cout<<"Next: ResetLast\n";}
-        else if (next==Actions::ResetAll){std::cout<<"Next: ResetAll\n";} 
     }
+}
+
+void PlannerGUI::GenerateRandomContinuous()
+{
+
 }

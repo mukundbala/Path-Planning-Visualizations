@@ -35,7 +35,6 @@ RectangleObstacle::RectangleObstacle(sf::Vector2f size_input,sf::Vector2f positi
     toleranced_corners = {adj_corner_0,adj_corner_1,adj_corner_2,adj_corner_3};
 
     obstacle_type="rectangle";
-    std::cout<<"here\n";
 }
 
 RectangleObstacle::RectangleObstacle(sf::Vector2f size_input,Vec2D position_input):size(size_input)

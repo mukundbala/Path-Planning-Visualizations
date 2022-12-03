@@ -5,6 +5,7 @@
 
 #include <string>
 #include <memory>
+#include <random>
 #include <obstacles.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -16,7 +17,9 @@ class AppData
 {
 private:
     std::string chosen_map_type_;
+    std::string chosen_obstacle_mode;
     std::string chosen_planner_;
+    std::pair<int,int> resolution_;
     YAML::Node loader;
 public:
     AppData();
@@ -33,9 +36,9 @@ public:
     
     std::vector<std::string> discrete_planners;
 
-    ObstacleArray<RectangleObstacle,std::vector> rect_obs;
+    ObstacleArray<RectangleObstacle,std::vector> rect_obs_array;
 
-    ObstacleArray<CircleObstacle,std::vector> circle_obs;
+    ObstacleArray<CircleObstacle,std::vector> circle_obs_array;
 
 };
 
@@ -72,18 +75,25 @@ public:
     void DrawContinuousMapSelection();
     void ChoosePlannerCallback(std::string planner);
 
-    // void CircObsCallback();
-    // void RectObsCallback();
-    // void ClearLastCallback();
-    // void ClearAllCallback();
+    void GenerateRandomContinuous();
+    void GenerateRandomDiscrete();
+    
+    
+    
+    
 
     enum class Actions:unsigned short
     {
         NotStarted,
         DrawCircle,
         DrawRectangle,
-        ResetLast,
+        ResetLastCircle,
+        ResetLastRectangle,
         ResetAll,
+        RandomRect,
+        RandomCircle,
+        RandomMix,
+        Done,
     };
     //widgets
 

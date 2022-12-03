@@ -1,9 +1,12 @@
 ##planners
 
-continuous_planner: 
+continuous_planner:  
   - rrt
   - rrtstar
   - rrtmarch
+
 discrete_planner:
   - bfs
   - dfs
+  
+resolution: [20,20]
