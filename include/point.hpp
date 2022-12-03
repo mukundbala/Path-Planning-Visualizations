@@ -3,6 +3,7 @@
 #include <string>
 #include <cassert>
 #include <math.h>
+#include <memory>
 #include<iostream>
 #include <SFML/Graphics.hpp>
 
