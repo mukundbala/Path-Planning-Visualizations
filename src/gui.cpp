@@ -4,7 +4,7 @@ AppData::AppData()
 {
     chosen_map_type_="";
     chosen_planner_="";
-    loader=YAML::LoadFile("config/planners.yaml");
+    loader=YAML::LoadFile("config/config.yaml");
     continuous_planners=loader["continuous_planner"].as<std::vector<std::string>>();
     discrete_planners=loader["discrete_planner"].as<std::vector<std::string>>();
     resolution_=std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
@@ -492,5 +492,13 @@ void PlannerGUI::runObstacleSelector()
 
 void PlannerGUI::GenerateRandomContinuous()
 {
+    int successful_points=0;
+    std::random_device rdx;
+    std::random_device rdy;
 
+    std::default_random_engine engx(rdx());
+    std::default_random_engine engy(rdy());
+    
+    std::uniform_real_distribution<double> distrx(0,windowX-obs_size.x);
+    std::uniform_real_distribution<double> distry(0,windowY-obs_size.y);
 }
