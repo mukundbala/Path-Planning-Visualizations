@@ -5,9 +5,26 @@ AppData::AppData()
     chosen_map_type_="";
     chosen_planner_="";
     loader=YAML::LoadFile("config/config.yaml");
+    gui_window_x_ = 800;
+    gui_window_y_ = 600;
+    control_pane_width = 200;
+    map_y_ = 980;
+    map_x_=loader["map_width"].as<double>();
     continuous_planners=loader["continuous_planner"].as<std::vector<std::string>>();
     discrete_planners=loader["discrete_planner"].as<std::vector<std::string>>();
     resolution_=std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
+    if (resolution_.first != resolution_.second)
+    {
+        resolution_=std::make_pair(20,20);
+        std::cout<<"[AppData]: Invalid Resolution! Defaulting to (20,20)\n";
+    }
+
+    else if (resolution_.first > 60)
+    {
+        resolution_=std::make_pair(20,20);
+        std::cout<<"[AppData]: Invalid Resolution! Defaulting to (20,20)\n";
+    }
+
     std::cout<<"[AppData]: List of planners loaded!\n";
 }
 
@@ -21,43 +38,67 @@ std::string AppData::getChosenPlanner()
     return this->chosen_planner_;
 }
 
+int AppData::getGUIWindowX()
+{
+    return this->gui_window_x_;
+}
+
+int AppData::getGUIWindowY()
+{
+    return this->gui_window_y_;
+}
+
+int AppData::getControlPaneWidth()
+{
+    return this->control_pane_width;
+}
+
+int AppData::getMapX()
+{
+    return this->map_x_;
+}
+
+int AppData::getMapY()
+{
+    return this->map_y_;
+}
+
 void AppData::setChosenMap(std::string type)
 {
-    this->chosen_map_type_=type;
+    this->chosen_map_type_ = type;
 }
 
 void AppData::setChosenPlanner(std::string type)
 {
-    this->chosen_planner_=type;
+    this->chosen_planner_ = type;
 }
 
-PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data,int window_x,int window_y,int selector_window_x, int selector_window_y)
+PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
 {   
-    //sf::RenderWindow window{{800, 600}, "TGUI window with SFML"};
-    gui_window_size_.x=window_x;
-    gui_window_size_.y=window_y;
-    selector_window_size_.x=selector_window_x;
-    selector_window_size_.y=selector_window_y;
-    gui_window_.create(sf::VideoMode(gui_window_size_.x,gui_window_size_.y,32),"Planner GUI");
-    gui_backend_.setTarget(gui_window_);
-    background_color_=sf::Color::Red;
+    app_data_ = data;
+    gui_window_chooser_size_.x = app_data_->getGUIWindowX();
+    gui_window_chooser_size_.y = app_data_->getGUIWindowY();
+    gui_window_selector_size_.x = app_data_->getControlPaneWidth() + app_data_->getMapX();
+    gui_window_selector_size_.y = app_data_->getMapY();
+    gui_window_chooser_.create(sf::VideoMode(gui_window_chooser_size_.x,gui_window_chooser_size_.y,32),"Planner GUI");
+    gui_backend_chooser_.setTarget(gui_window_chooser_);
+    background_color_ = sf::Color::Red;
     dark_theme_.setDefault("themes/Black.txt");
     screen_num = 0;
-    app_data_=data;
-
+    std::cout << "[PlannerGUI]: Planner GUI initialized!\n";
 }
 
 void PlannerGUI::run()
 {
-    while (gui_window_.isOpen())
+    while (gui_window_chooser_.isOpen())
     {
         sf::Event event;
-        while (gui_window_.pollEvent(event))
+        while (gui_window_chooser_.pollEvent(event))
         {
-            gui_backend_.handleEvent(event);
+            gui_backend_chooser_.handleEvent(event);
             if (event.type==sf::Event::Closed)
             {
-                gui_window_.close();
+                gui_window_chooser_.close();
             }
         }
         //gui_window_.clear(sf::Color::Red);
@@ -65,9 +106,9 @@ void PlannerGUI::run()
         else if (screen_num == 1){DrawMapTypeScreen();}
         else if (screen_num==2){DrawContinuousMapSelection();}
         else if (screen_num==3){DrawDiscreteMapSelection();}
-        gui_backend_.draw();
-        gui_window_.display();
-        gui_window_.clear(sf::Color::Red);
+        gui_backend_chooser_.draw();
+        gui_window_chooser_.display();
+        gui_window_chooser_.clear(sf::Color::Red);
     }
     sf::sleep(sf::seconds(1));
     runObstacleSelector();       
@@ -75,7 +116,7 @@ void PlannerGUI::run()
 
 void PlannerGUI::DrawHomeScreen()
 {
-    gui_backend_.removeAllWidgets();
+    gui_backend_chooser_.removeAllWidgets();
 
     auto label_title = tgui::Label::create(); 
     auto go_button = tgui::Button::create("Go");
@@ -110,16 +151,16 @@ void PlannerGUI::DrawHomeScreen()
     canvas->display();
 
     //adding stuff
-    gui_backend_.add(label_title);
-    gui_backend_.add(go_button);
-    gui_backend_.add(exit_button);
-    gui_backend_.add(canvas);
+    gui_backend_chooser_.add(label_title);
+    gui_backend_chooser_.add(go_button);
+    gui_backend_chooser_.add(exit_button);
+    gui_backend_chooser_.add(canvas);
 
 }
 
 void PlannerGUI::quitCallback()
 {
-    gui_window_.close(); //ToDO, use RAII standards to release resources using destructor
+    gui_window_chooser_.close(); //ToDO, use RAII standards to release resources using destructor
 }
 
 void PlannerGUI::goCallback()
@@ -130,7 +171,7 @@ void PlannerGUI::goCallback()
 
 void PlannerGUI::DrawMapTypeScreen()
 {
-    gui_backend_.removeAllWidgets();
+    gui_backend_chooser_.removeAllWidgets();
     
     auto label_description = tgui::Label::create();
     auto continuous_map_button = tgui::Button::create();
@@ -152,9 +193,9 @@ void PlannerGUI::DrawMapTypeScreen()
     discrete_map_button->setTextSize(28);
     discrete_map_button->onMousePress(&PlannerGUI::DiscreteMapTypeCallback,this);
 
-    gui_backend_.add(label_description);
-    gui_backend_.add(continuous_map_button);
-    gui_backend_.add(discrete_map_button);
+    gui_backend_chooser_.add(label_description);
+    gui_backend_chooser_.add(continuous_map_button);
+    gui_backend_chooser_.add(discrete_map_button);
 }
 
 
@@ -166,87 +207,87 @@ void PlannerGUI::ContinuousMapTypeCallback()
         return;
     }
     app_data_->setChosenMap("continuous");
-    screen_num=2;
+    screen_num = 2;
 
 }
 
 void PlannerGUI::DiscreteMapTypeCallback()
 {
-    if (app_data_->getChosenMap().size()!=0)
+    if (app_data_->getChosenMap().size() != 0)
     {
         return;
     }
     app_data_->setChosenMap("discrete");
-    screen_num=3;
+    screen_num = 3;
 }
 
 void PlannerGUI::DrawDiscreteMapSelection()
 {
-    gui_backend_.removeAllWidgets();
+    gui_backend_chooser_.removeAllWidgets();
     
-    int num_planners=app_data_->discrete_planners.size();
-    const int initial_x=100;
-    const int initial_y=200;
-    const sf::Vector2u button_size={80,100};
-    const int spacing_x=button_size.x + 20;
-    const int spacing_y=button_size.y + 20;
-    const int rowcol=3;
-    auto label=tgui::Label::create();
+    int num_planners = app_data_->discrete_planners.size();
+    const int initial_x = 100;
+    const int initial_y = 200;
+    const sf::Vector2u button_size = {80,100};
+    const int spacing_x = button_size.x + 20;
+    const int spacing_y = button_size.y + 20;
+    const int rowcol = 3;
+    auto label = tgui::Label::create();
     label->setPosition(140,50);
     label->setText("Choose a Discrete Planner!");
     label->setTextSize(40);
-    gui_backend_.add(label);
+    gui_backend_chooser_.add(label);
     std::vector<tgui::Button::Ptr> buttons;
 
     for (int i=0; i<num_planners ; ++i)
     {
-        auto button=tgui::Button::create();
+        auto button = tgui::Button::create();
         buttons.push_back(button);
     }
 
-    for (int i=0; i<num_planners; ++i)
+    for (int i = 0; i < num_planners; ++i)
     {
         buttons[i]->setSize(button_size.x,button_size.y);
         buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
         buttons[i]->setText(app_data_->discrete_planners[i]);
         buttons[i]->setTextSize(0);
         buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->discrete_planners[i]);
-        gui_backend_.add(buttons[i]);
+        gui_backend_chooser_.add(buttons[i]);
     }
 }
 
 void PlannerGUI::DrawContinuousMapSelection()
 {
-    gui_backend_.removeAllWidgets();
+    gui_backend_chooser_.removeAllWidgets();
     
-    int num_planners=app_data_->continuous_planners.size();
-    const int initial_x=100;
-    const int initial_y=200;
-    const sf::Vector2u button_size={80,100};
-    const int spacing_x=button_size.x + 20;
-    const int spacing_y=button_size.y + 20;
-    const int rowcol=3;
-    auto label=tgui::Label::create();
+    int num_planners = app_data_->continuous_planners.size();
+    const int initial_x = 100;
+    const int initial_y = 200;
+    const sf::Vector2u button_size = {80,100};
+    const int spacing_x = button_size.x + 20;
+    const int spacing_y = button_size.y + 20;
+    const int rowcol = 3;
+    auto label = tgui::Label::create();
     label->setPosition(140,50);
     label->setText("Choose a Continuous Planner!");
     label->setTextSize(40);
-    gui_backend_.add(label);
+    gui_backend_chooser_.add(label);
     std::vector<tgui::Button::Ptr> buttons;
 
-    for (int i=0; i<num_planners ; ++i)
+    for (int i = 0; i < num_planners ; ++i)
     {
-        auto button=tgui::Button::create();
+        auto button = tgui::Button::create();
         buttons.push_back(button);
     }
 
-    for (int i=0; i<num_planners; ++i)
+    for (int i = 0; i < num_planners; ++i)
     {
         buttons[i]->setSize(button_size.x,button_size.y);
         buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
         buttons[i]->setText(app_data_->continuous_planners[i]);
         buttons[i]->setTextSize(0);
         buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->continuous_planners[i]);
-        gui_backend_.add(buttons[i]);
+        gui_backend_chooser_.add(buttons[i]);
     }
 }
 
@@ -255,15 +296,15 @@ void PlannerGUI::ChoosePlannerCallback(std::string planner)
     app_data_->setChosenPlanner(planner);
     std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
     sf::sleep(sf::seconds(1));
-    gui_window_.close();
+    gui_window_chooser_.close();
 }
 
 void PlannerGUI::runObstacleSelector()
 {
-    gui_window_selector_.create(sf::VideoMode(selector_window_size_.x,selector_window_size_.y,32),"Selector GUI");
+    gui_window_selector_.create(sf::VideoMode(gui_window_selector_size_.x,gui_window_selector_size_.y,32),"Selector GUI");
     gui_backend_selector_.setTarget(gui_window_selector_);
     
-    Actions state=Actions::NotStarted;
+    Actions state = Actions::NotStarted;
     
     sf::Clock selector_clock; // check how long the mouse has be held
     bool pos_mouse = 0;
@@ -298,7 +339,7 @@ void PlannerGUI::runObstacleSelector()
                 }
             }
 
-            if (event.type==sf::Event::MouseButtonReleased && pos_mouse)
+            if (event.type == sf::Event::MouseButtonReleased && pos_mouse)
             {
                 if ((state == Actions::DrawCircle || state == Actions::DrawRectangle) && 
                     event.mouseButton.x > 200 && 
@@ -310,32 +351,32 @@ void PlannerGUI::runObstacleSelector()
                     if (abs(neg_mouse_time - pos_mouse_time) >= 5)
                     {
                         //hold time must be about 5 milliseconds
-                        neg_mouse_pos.x=event.mouseButton.x;
-                        neg_mouse_pos.y=event.mouseButton.y;
-                        double dist_between= sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
+                        neg_mouse_pos.x = event.mouseButton.x;
+                        neg_mouse_pos.y = event.mouseButton.y;
+                        double dist_between = sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
                                                     +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
-                        if (dist_between>=10)
+                        if (dist_between >= 10)
                         {
-                            if (state==Actions::DrawCircle)
+                            if (state == Actions::DrawCircle)
                             {
                                CircleObstacle circ(dist_between/2,pos_mouse_pos);
                                app_data_->circle_obs_array.array.emplace_back(circ);
                                std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
                             }
-                            else if (state==Actions::DrawRectangle)
+                            else if (state == Actions::DrawRectangle)
                             {
                                 sf::Vector2f size = {abs(pos_mouse_pos.x-neg_mouse_pos.x),abs(pos_mouse_pos.y-neg_mouse_pos.y)};
 
                                 if ( (pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
                                 {
                                     app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y / 2)));
-                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
                                 }
 
                                 else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
                                 {
                                     app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
-                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
                                 }
 
                                 else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
@@ -355,16 +396,16 @@ void PlannerGUI::runObstacleSelector()
                     }
                 }
                 //reset everything before leaving this event
-                pos_mouse=0;
-                pos_mouse_time=0;
-                neg_mouse_time=0;
+                pos_mouse = 0;
+                pos_mouse_time = 0;
+                neg_mouse_time = 0;
                 pos_mouse_pos = {-1,-1};
                 neg_mouse_pos = {-1,-1};
             }
         }
         gui_backend_selector_.removeAllWidgets();
 
-        auto circle_obs_button=tgui::Button::create();
+        auto circle_obs_button = tgui::Button::create();
         circle_obs_button->setSize(80,80);
         circle_obs_button->setPosition(60,100);
         circle_obs_button->setText("Draw\nCircle");
@@ -372,7 +413,7 @@ void PlannerGUI::runObstacleSelector()
         circle_obs_button->onMousePress([&]{state=Actions::DrawCircle;});
         gui_backend_selector_.add(circle_obs_button);
         
-        auto rectangle_obs_button=tgui::Button::create();
+        auto rectangle_obs_button = tgui::Button::create();
         rectangle_obs_button->setSize(80,80);
         rectangle_obs_button->setPosition(60,200);
         rectangle_obs_button->setText(" Draw\nRectangle");
@@ -380,7 +421,7 @@ void PlannerGUI::runObstacleSelector()
         rectangle_obs_button->onMousePress([&]{state=Actions::DrawRectangle;});
         gui_backend_selector_.add(rectangle_obs_button);
         
-        auto reset_last_circle_obs_button=tgui::Button::create();
+        auto reset_last_circle_obs_button = tgui::Button::create();
         reset_last_circle_obs_button->setSize(80,80);
         reset_last_circle_obs_button->setPosition(60,300);
         reset_last_circle_obs_button->setText("Reset\nLastCircle");
@@ -390,17 +431,17 @@ void PlannerGUI::runObstacleSelector()
                                                 state=Actions::ResetLastCircle;});
         gui_backend_selector_.add(reset_last_circle_obs_button);
 
-        auto reset_last_rectangle_obs_button=tgui::Button::create();
+        auto reset_last_rectangle_obs_button = tgui::Button::create();
         reset_last_rectangle_obs_button->setSize(80,80);
         reset_last_rectangle_obs_button->setPosition(60,400);
         reset_last_rectangle_obs_button->setText("Reset\nLastRect");
         reset_last_rectangle_obs_button->setTextSize(15);
         reset_last_rectangle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
                                                 {return;}
-                                                state=Actions::ResetLastRectangle;});
+                                                state = Actions::ResetLastRectangle;});
         gui_backend_selector_.add(reset_last_rectangle_obs_button);
         
-        auto reset_all_obstacle_button=tgui::Button::create();
+        auto reset_all_obstacle_button = tgui::Button::create();
         reset_all_obstacle_button->setSize(80,80);
         reset_all_obstacle_button->setPosition(60,500);
         reset_all_obstacle_button->setText("Reset\n All");
@@ -410,7 +451,7 @@ void PlannerGUI::runObstacleSelector()
                                                 state=Actions::ResetAll;});
         gui_backend_selector_.add(reset_all_obstacle_button);
         
-        auto done_button=tgui::Button::create();
+        auto done_button = tgui::Button::create();
         done_button->setSize(80,80);
         done_button->setPosition(60,600);
         done_button->setText("Done");
@@ -420,19 +461,19 @@ void PlannerGUI::runObstacleSelector()
                                                 state=Actions::Done;});
         gui_backend_selector_.add(done_button);
 
-        if (state==Actions::ResetLastCircle)
+        if (state == Actions::ResetLastCircle)
         {
             
             if (app_data_->circle_obs_array.array.size()>0)
             {
                 app_data_->circle_obs_array.array.pop_back();
                 state=Actions::DrawCircle; //reset state
-                std::cout<<"[Obstacle Selector]: Circle Obstacles Removed!\n";
+                std::cout << "[Obstacle Selector]: Circle Obstacles Removed!\n";
             }
             else 
             {
-                std::cout<<"[Obstacle Selector]: No Circle Obstacles Left!\n";
-                state=Actions::DrawCircle; //reset state
+                std::cout << "[Obstacle Selector]: No Circle Obstacles Left!\n";
+                state = Actions::DrawCircle; //reset state
             }
         }
         
@@ -441,13 +482,13 @@ void PlannerGUI::runObstacleSelector()
             if (app_data_->rect_obs_array.array.size()>0)
             {
                 app_data_->rect_obs_array.array.pop_back();
-                std::cout<<"[Obstacle Selector]: Rectangle Obstacles Removed!\n";
-                state=Actions::DrawRectangle;
+                std::cout << "[Obstacle Selector]: Rectangle Obstacles Removed!\n";
+                state = Actions::DrawRectangle;
             }
             else
             {
-                std::cout<<"[Obstacle Selector]: No Rectangle Obstacles Left\n";
-                state=Actions::DrawRectangle; //reset state
+                std::cout << "[Obstacle Selector]: No Rectangle Obstacles Left\n";
+                state = Actions::DrawRectangle; //reset state
             }
         }
 
@@ -463,8 +504,8 @@ void PlannerGUI::runObstacleSelector()
                 app_data_->rect_obs_array.array.clear();
             }
 
-            std::cout<<"[Obstacle Selector]: Obstacle selections cleared!\n";
-            state=Actions::DrawCircle;
+            std::cout << "[Obstacle Selector]: Obstacle selections cleared!\n";
+            state = Actions::DrawCircle;
 
         }
         
@@ -492,13 +533,13 @@ void PlannerGUI::runObstacleSelector()
 
 void PlannerGUI::GenerateRandomContinuous()
 {
-    int successful_points=0;
+    int successful_points = 0;
     std::random_device rdx;
     std::random_device rdy;
 
     std::default_random_engine engx(rdx());
     std::default_random_engine engy(rdy());
     
-    std::uniform_real_distribution<double> distrx(0,windowX-obs_size.x);
-    std::uniform_real_distribution<double> distry(0,windowY-obs_size.y);
+    // std::uniform_real_distribution<double> distrx(0,windowX-obs_size.x);
+    // std::uniform_real_distribution<double> distry(0,windowY-obs_size.y);
 }

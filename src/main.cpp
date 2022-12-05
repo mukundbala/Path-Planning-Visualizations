@@ -16,6 +16,6 @@ int main() {
     // // gui.mainLoop();
     // 
 std::shared_ptr<AppData> data= std::make_shared<AppData>();
-PlannerGUI gui (data,800,600,1480,980);
+PlannerGUI gui (data);
 gui.run();
 }

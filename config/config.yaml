@@ -1,4 +1,5 @@
-##planners
+
+map_width: 1280
 
 continuous_planner:  
   - rrt

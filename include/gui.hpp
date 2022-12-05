@@ -16,10 +16,17 @@ on user input
 class AppData
 {
 private:
-    std::string chosen_map_type_;
-    std::string chosen_obstacle_mode;
-    std::string chosen_planner_;
-    std::pair<int,int> resolution_;
+    std::string chosen_map_type_; //the map type (discrete or continuous)
+    std::string chosen_obstacle_mode; //custom or random
+    std::string chosen_planner_; //the type of planner
+
+    int gui_window_x_;
+    int gui_window_y_;
+    int control_pane_width;
+    int map_y_;
+    int map_x_; //width of the map. This will be the only thing a user can control
+    
+    std::pair<int,int> resolution_; //resolution of discrete planner
     YAML::Node loader;
 public:
     AppData();
@@ -27,6 +34,12 @@ public:
     std::string getChosenMap();
     
     std::string getChosenPlanner();
+
+    int getGUIWindowX();
+    int getGUIWindowY();
+    int getControlPaneWidth();
+    int getMapY();
+    int getMapX();
     
     void setChosenMap(std::string type);
     
@@ -45,11 +58,11 @@ public:
 class PlannerGUI
 {
 private:
-    sf::Vector2u gui_window_size_;
-    sf::Vector2u selector_window_size_;
-    sf::RenderWindow gui_window_;
+    sf::Vector2u gui_window_chooser_size_;
+    sf::Vector2u gui_window_selector_size_;
+    sf::RenderWindow gui_window_chooser_;
     sf::RenderWindow gui_window_selector_;
-    tgui::GuiSFML gui_backend_;
+    tgui::GuiSFML gui_backend_chooser_;
     tgui::GuiSFML gui_backend_selector_;
     sf::Color background_color_;
     tgui::Theme dark_theme_;
@@ -58,7 +71,7 @@ private:
     std::shared_ptr<AppData> app_data_;
 
 public:
-    PlannerGUI(std::shared_ptr<AppData> data,int window_x,int window_y,int selector_window_x, int selector_window_y);
+    PlannerGUI(std::shared_ptr<AppData> data);
     void run();
     void runObstacleSelector();
     //callbacks
