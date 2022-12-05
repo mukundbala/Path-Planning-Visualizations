@@ -159,6 +159,14 @@ double Vec2D::mag(Vec2D& other_point)const
     return magnitude_of_line;
 }
 
+double Vec2D::mag(sf::Vector2f& other_point)const
+{
+    double magnitude_of_line=sqrt(
+                            pow(other_point.x-this->x_,2)+
+                            pow(other_point.y-this->y_,2));
+    return magnitude_of_line;
+}
+
 double Vec2D::dot(Vec2D& rhs)const
 {
     double dot_product=(this->x_*rhs.x()) + (this->y_*rhs.y());
@@ -191,6 +199,27 @@ sf::Vector2f Vec2D::Vec2DToSFV2f()const
     my_vec.x = this->x_;
     my_vec.y = this->y_;
     return my_vec;
+}
+
+Vec2D Vec2D::ContinuousSpaceToGridSpace(const std::pair<int,int>& rez,double x_max, double y_max,double x_min,double y_min)const
+{
+    Vec2D grid_pt;
+    int x = (this->x_ - x_min) / rez.first;
+    int y = (this->y_ - y_min) / rez.second;
+
+    x = x == (x_max / rez.first) ?  x - 1 : x;
+    y = y == (y_max / rez.second) ? y - 1 : y;
+    grid_pt.x(x);
+    grid_pt.y(y);
+    return grid_pt;
+}
+
+Vec2D Vec2D::GridSpaceToContinuousSpace(const std::pair<int,int>& rez, double x_min_cont, double y_min_cont)const
+{
+    Vec2D continuous_coords;
+    continuous_coords.x(x_min_cont + (this->x_ * rez.first) + (rez.first / 2));
+    continuous_coords.y(y_min_cont + (this->y_ * rez.second) + (rez.second / 2));
+    return continuous_coords;
 }
 
 void Vec2D::print()const

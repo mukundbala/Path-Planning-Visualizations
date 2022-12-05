@@ -58,6 +58,7 @@ public:
 
    double mag()const;
    double mag(Vec2D& other_point)const;
+   double mag(sf::Vector2f& other_point)const;
 
    void normalize();
    Vec2D normalize()const;
@@ -65,7 +66,15 @@ public:
    double dot (Vec2D& rhs)const;
 
    Vec2D SFV2fToVec2D(sf::Vector2f& vec)const;
-   sf::Vector2f Vec2DToSFV2f()const; 
+   sf::Vector2f Vec2DToSFV2f()const;
+
+   /*
+    Function tools to convert from continuous space <->grid space
+   */
+
+    Vec2D ContinuousSpaceToGridSpace(const std::pair<int,int>& rez,double x_max, double y_max,double x_min,double y_min)const;
+
+    Vec2D GridSpaceToContinuousSpace(const std::pair<int,int>& rez, double x_min_cont, double y_min_cont)const;
 
    void print()const;
 
