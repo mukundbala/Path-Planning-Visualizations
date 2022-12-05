@@ -13,7 +13,7 @@ private:
     sf::Vector2f size; //l*b dimensions of the obstacles.
     
     sf::Vector2f position;
-    
+  
     double closeness_tolerance;
     
     sf::Color obstacle_color;
@@ -53,7 +53,7 @@ private:
     
     double radius;
 
-    sf::Vector2f position;   
+    sf::Vector2f position;
     
     double closeness_tolerance;
 

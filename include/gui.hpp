@@ -27,6 +27,8 @@ private:
     int map_x_; //width of the map. This will be the only thing a user can control
     
     std::pair<int,int> resolution_; //resolution of discrete planner
+    double EPS;
+    int num_random_obstacles;
     YAML::Node loader;
 public:
     AppData();
@@ -35,12 +37,15 @@ public:
     
     std::string getChosenPlanner();
 
-    int getGUIWindowX();
-    int getGUIWindowY();
-    int getControlPaneWidth();
-    int getMapY();
-    int getMapX();
-    
+    int getGUIWindowX()const;
+    int getGUIWindowY()const;
+    int getControlPaneWidth()const;
+    int getMapY()const;
+    int getMapX()const;
+    int getNumRandomObs()const;
+    double getEPS()const;
+    std::pair<int,int> getResolution()const;
+
     void setChosenMap(std::string type);
     
     void setChosenPlanner(std::string type);
@@ -52,7 +57,6 @@ public:
     ObstacleArray<RectangleObstacle,std::vector> rect_obs_array;
 
     ObstacleArray<CircleObstacle,std::vector> circle_obs_array;
-
 };
 
 class PlannerGUI
@@ -69,6 +73,10 @@ private:
     tgui::Theme blue_theme_;
     int screen_num;
     std::shared_ptr<AppData> app_data_;
+    sf::Vector2f default_rectobs_size_; //used for generating obstacles in random mode
+    double default_circobs_radius_; //used for generating obstacles in random mode
+    std::pair<int,int> resolution_;
+    double EPS;
 
 public:
     PlannerGUI(std::shared_ptr<AppData> data);
@@ -89,8 +97,11 @@ public:
     void ChoosePlannerCallback(std::string planner);
 
     void GenerateRandomContinuous();
+
+    void GenerateGrids();
     void GenerateRandomDiscrete();
     
+
     
     
     
@@ -103,9 +114,7 @@ public:
         ResetLastCircle,
         ResetLastRectangle,
         ResetAll,
-        RandomRect,
-        RandomCircle,
-        RandomMix,
+        Random,
         Done,
     };
     //widgets

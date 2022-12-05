@@ -2,26 +2,28 @@
 
 AppData::AppData()
 {
-    chosen_map_type_="";
-    chosen_planner_="";
+    chosen_map_type_= "";
+    chosen_planner_= "";
     loader=YAML::LoadFile("config/config.yaml");
     gui_window_x_ = 800;
     gui_window_y_ = 600;
     control_pane_width = 200;
     map_y_ = 980;
-    map_x_=loader["map_width"].as<double>();
-    continuous_planners=loader["continuous_planner"].as<std::vector<std::string>>();
-    discrete_planners=loader["discrete_planner"].as<std::vector<std::string>>();
-    resolution_=std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
+    map_x_= loader["map_width"].as<double>();
+    continuous_planners = loader["continuous_planner"].as<std::vector<std::string>>();
+    discrete_planners = loader["discrete_planner"].as<std::vector<std::string>>();
+    resolution_ = std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
+    num_random_obstacles = loader["num_random_obstacles"].as<int>();
+    EPS = 1e-6;
     if (resolution_.first != resolution_.second)
     {
-        resolution_=std::make_pair(20,20);
+        resolution_ = std::make_pair(20,20);
         std::cout<<"[AppData]: Invalid Resolution! Defaulting to (20,20)\n";
     }
 
     else if (resolution_.first > 60)
     {
-        resolution_=std::make_pair(20,20);
+        resolution_ = std::make_pair(20,20);
         std::cout<<"[AppData]: Invalid Resolution! Defaulting to (20,20)\n";
     }
 
@@ -38,29 +40,44 @@ std::string AppData::getChosenPlanner()
     return this->chosen_planner_;
 }
 
-int AppData::getGUIWindowX()
+int AppData::getGUIWindowX()const
 {
     return this->gui_window_x_;
 }
 
-int AppData::getGUIWindowY()
+int AppData::getGUIWindowY()const
 {
     return this->gui_window_y_;
 }
 
-int AppData::getControlPaneWidth()
+int AppData::getControlPaneWidth()const
 {
     return this->control_pane_width;
 }
 
-int AppData::getMapX()
+int AppData::getMapX()const
 {
     return this->map_x_;
 }
 
-int AppData::getMapY()
+int AppData::getMapY()const
 {
     return this->map_y_;
+}
+
+int AppData::getNumRandomObs()const
+{
+    return this->num_random_obstacles;
+}
+
+double AppData::getEPS()const
+{
+    return this->EPS;
+}
+
+std::pair<int,int> AppData::getResolution()const
+{
+    return this->resolution_;
 }
 
 void AppData::setChosenMap(std::string type)
@@ -85,6 +102,10 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     background_color_ = sf::Color::Red;
     dark_theme_.setDefault("themes/Black.txt");
     screen_num = 0;
+    default_circobs_radius_ = 10;
+    default_rectobs_size_ = {default_circobs_radius_*2,default_circobs_radius_*2};
+    EPS=app_data_->getEPS();
+    resolution_ = app_data_->getResolution();
     std::cout << "[PlannerGUI]: Planner GUI initialized!\n";
 }
 
@@ -96,7 +117,7 @@ void PlannerGUI::run()
         while (gui_window_chooser_.pollEvent(event))
         {
             gui_backend_chooser_.handleEvent(event);
-            if (event.type==sf::Event::Closed)
+            if (event.type == sf::Event::Closed)
             {
                 gui_window_chooser_.close();
             }
@@ -312,7 +333,7 @@ void PlannerGUI::runObstacleSelector()
     sf::Int32 neg_mouse_time = 0;
     sf::Vector2f pos_mouse_pos = {-1,-1};
     sf::Vector2f neg_mouse_pos = {-1,-1};
-    
+    std::vector<int> discrete_point_tester((app_data_->getMapX() / resolution_.first) * (app_data_->getMapY() / resolution_.second),0);
     while (gui_window_selector_.isOpen())
     {
         sf::Event event;
@@ -324,83 +345,110 @@ void PlannerGUI::runObstacleSelector()
                 gui_window_selector_.close();
             }
 
-            if (event.type == sf::Event::MouseButtonPressed && !pos_mouse) 
+            if (app_data_->getChosenMap()=="continuous")
             {
-                if ((state == Actions::DrawCircle || state==Actions::DrawRectangle) && 
-                    event.mouseButton.x > 200 && 
-                    event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
-                    event.mouseButton.y >= 0 &&
-                    event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                if (event.type == sf::Event::MouseButtonPressed && !pos_mouse) 
                 {
-                    pos_mouse = true; //positive mouse press detected
-                    pos_mouse_time = selector_clock.getElapsedTime().asMilliseconds(); //record time
-                    pos_mouse_pos.x = event.mouseButton.x;
-                    pos_mouse_pos.y = event.mouseButton.y;
-                }
-            }
-
-            if (event.type == sf::Event::MouseButtonReleased && pos_mouse)
-            {
-                if ((state == Actions::DrawCircle || state == Actions::DrawRectangle) && 
-                    event.mouseButton.x > 200 && 
-                    event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
-                    event.mouseButton.y >= 0 &&
-                    event.mouseButton.y < (int)gui_window_selector_.getSize().y)
-                {
-                    neg_mouse_time = selector_clock.getElapsedTime().asMilliseconds();
-                    if (abs(neg_mouse_time - pos_mouse_time) >= 5)
+                    if ((state == Actions::DrawCircle || state==Actions::DrawRectangle) && 
+                        event.mouseButton.x > app_data_->getControlPaneWidth() && 
+                        event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
+                        event.mouseButton.y >= 0 &&
+                        event.mouseButton.y < (int)gui_window_selector_.getSize().y)
                     {
-                        //hold time must be about 5 milliseconds
-                        neg_mouse_pos.x = event.mouseButton.x;
-                        neg_mouse_pos.y = event.mouseButton.y;
-                        double dist_between = sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
-                                                    +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
-                        if (dist_between >= 10)
+                        pos_mouse = true; //positive mouse press detected
+                        pos_mouse_time = selector_clock.getElapsedTime().asMilliseconds(); //record time
+                        pos_mouse_pos.x = event.mouseButton.x;
+                        pos_mouse_pos.y = event.mouseButton.y;
+                    }
+                }
+
+                if (event.type == sf::Event::MouseButtonReleased && pos_mouse)
+                {
+                    if ((state == Actions::DrawCircle || state == Actions::DrawRectangle) && 
+                        event.mouseButton.x > app_data_->getControlPaneWidth() && 
+                        event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
+                        event.mouseButton.y >= 0 &&
+                        event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                    {
+                        neg_mouse_time = selector_clock.getElapsedTime().asMilliseconds();
+                        if (abs(neg_mouse_time - pos_mouse_time) >= 5)
                         {
-                            if (state == Actions::DrawCircle)
+                            //hold time must be about 5 milliseconds
+                            neg_mouse_pos.x = event.mouseButton.x;
+                            neg_mouse_pos.y = event.mouseButton.y;
+                            double dist_between = sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
+                                                        +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
+                            if (dist_between >= 10)
                             {
-                               CircleObstacle circ(dist_between/2,pos_mouse_pos);
-                               app_data_->circle_obs_array.array.emplace_back(circ);
-                               std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
-                            }
-                            else if (state == Actions::DrawRectangle)
-                            {
-                                sf::Vector2f size = {abs(pos_mouse_pos.x-neg_mouse_pos.x),abs(pos_mouse_pos.y-neg_mouse_pos.y)};
-
-                                if ( (pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
+                                if (state == Actions::DrawCircle)
                                 {
-                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y / 2)));
-                                    std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                CircleObstacle circ(dist_between/2,pos_mouse_pos);
+                                app_data_->circle_obs_array.array.emplace_back(circ);
+                                std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
                                 }
-
-                                else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
+                                else if (state == Actions::DrawRectangle)
                                 {
-                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
-                                    std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
-                                }
+                                    sf::Vector2f size = {abs(pos_mouse_pos.x-neg_mouse_pos.x),abs(pos_mouse_pos.y-neg_mouse_pos.y)};
 
-                                else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
-                                {
-                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y/2)));
-                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
-                                }
+                                    if ( (pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
+                                    {
+                                        app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y / 2)));
+                                        std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    }
 
-                                else if ((pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
-                                {
-                                    app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
-                                    std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
+                                    {
+                                        app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
+                                        std::cout << "[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    }
+
+                                    else if ((pos_mouse_pos.x > neg_mouse_pos.x) && (pos_mouse_pos.y < neg_mouse_pos.y) )
+                                    {
+                                        app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(neg_mouse_pos.x + size.x / 2,pos_mouse_pos.y + size.y/2)));
+                                        std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    }
+
+                                    else if ((pos_mouse_pos.x < neg_mouse_pos.x) && (pos_mouse_pos.y > neg_mouse_pos.y) )
+                                    {
+                                        app_data_->rect_obs_array.array.emplace_back(RectangleObstacle(size,sf::Vector2f(pos_mouse_pos.x + size.x / 2,neg_mouse_pos.y + size.y / 2)));
+                                        std::cout<<"[Obstacle Selector]: Rectangle Obstacle Added!\n";
+                                    }
+                                    
                                 }
-                                
                             }
                         }
                     }
+                    //reset everything before leaving this event
+                    pos_mouse = 0;
+                    pos_mouse_time = 0;
+                    neg_mouse_time = 0;
+                    pos_mouse_pos = {-1,-1};
+                    neg_mouse_pos = {-1,-1};
                 }
-                //reset everything before leaving this event
-                pos_mouse = 0;
-                pos_mouse_time = 0;
-                neg_mouse_time = 0;
-                pos_mouse_pos = {-1,-1};
-                neg_mouse_pos = {-1,-1};
+            }
+
+            else if (app_data_->getChosenMap() == "discrete")
+            {
+                if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    double posx = event.mouseButton.x;
+                    double posy = event.mouseButton.y;
+                    if (state == Actions::DrawRectangle && posx > app_data_->getControlPaneWidth())
+                    {
+                        Vec2D pos_cont_non_origin(posx,posy);
+                        Vec2D pos_grid = pos_cont_non_origin.ContinuousSpaceToGridSpace(resolution_,gui_window_selector_size_.x,gui_window_selector_size_.y,app_data_->getControlPaneWidth(),0);
+                        //num_cols * randy + randx;
+                        int idx_to_check = (app_data_->getMapX() / resolution_.first) * pos_grid.y() + pos_grid.x();
+                        bool isPointValid = !discrete_point_tester[idx_to_check];
+                        if (isPointValid)
+                        {
+                            Vec2D pos_cont_origin = pos_grid.GridSpaceToContinuousSpace(resolution_,app_data_->getControlPaneWidth(),0);
+                            RectangleObstacle newobs(sf::Vector2f(resolution_.first,resolution_.second),pos_cont_origin);
+                            app_data_ ->rect_obs_array.array.push_back(newobs);
+                            discrete_point_tester[idx_to_check]=1;
+                        }
+                    }
+                }
             }
         }
         gui_backend_selector_.removeAllWidgets();
@@ -451,9 +499,17 @@ void PlannerGUI::runObstacleSelector()
                                                 state=Actions::ResetAll;});
         gui_backend_selector_.add(reset_all_obstacle_button);
         
+        auto random_obstacle_button = tgui::Button::create();
+        random_obstacle_button->setSize(80,80);
+        random_obstacle_button->setPosition(60,600);
+        random_obstacle_button->setText("Random\nObstacle");
+        random_obstacle_button->setTextSize(15);
+        random_obstacle_button->onMousePress([&]{state=Actions::Random;});
+        gui_backend_selector_.add(random_obstacle_button);
+        
         auto done_button = tgui::Button::create();
         done_button->setSize(80,80);
-        done_button->setPosition(60,600);
+        done_button->setPosition(60,700);
         done_button->setText("Done");
         done_button->setTextSize(15);
         done_button->onMousePress([&]{if(state == Actions::NotStarted)
@@ -508,8 +564,20 @@ void PlannerGUI::runObstacleSelector()
             state = Actions::DrawCircle;
 
         }
-        
 
+        else if (state==Actions::Random)
+        {
+            if (app_data_->getChosenMap() == "continuous")
+            {
+                GenerateRandomContinuous();
+                state=Actions::DrawCircle;
+            }
+            else if (app_data_->getChosenMap() == "discrete"){
+                GenerateRandomDiscrete();
+                state=Actions::DrawRectangle;
+            }
+        }
+        
         for (const auto& circ_obs : app_data_->circle_obs_array.array)
         {
             gui_window_selector_.draw(circ_obs.shape);
@@ -520,11 +588,15 @@ void PlannerGUI::runObstacleSelector()
             gui_window_selector_.draw(rect_obs.shape);
         }
 
-        sf::RectangleShape rect_background;
-        rect_background.setPosition(0,0);
-        rect_background.setSize(sf::Vector2f(200,gui_window_selector_.getSize().y));
-        rect_background.setFillColor(sf::Color::Yellow);
-        gui_window_selector_.draw(rect_background);
+        if (app_data_ -> getChosenMap() == "discrete")
+        {
+            GenerateGrids();
+        }
+        sf::RectangleShape control_pane_background;
+        control_pane_background.setPosition(0,0);
+        control_pane_background.setSize(sf::Vector2f(200,gui_window_selector_.getSize().y));
+        control_pane_background.setFillColor(sf::Color::Yellow);
+        gui_window_selector_.draw(control_pane_background);
         gui_backend_selector_.draw();
         gui_window_selector_.display();
         gui_window_selector_.clear(sf::Color::Black);
@@ -534,12 +606,147 @@ void PlannerGUI::runObstacleSelector()
 void PlannerGUI::GenerateRandomContinuous()
 {
     int successful_points = 0;
+    int required_points = app_data_->getNumRandomObs();
+    bool circle_or_rect_switch = 0; // 0 for circle, 1 for rect. This is to avoid checking both arrays 
     std::random_device rdx;
     std::random_device rdy;
 
     std::default_random_engine engx(rdx());
     std::default_random_engine engy(rdy());
     
-    // std::uniform_real_distribution<double> distrx(0,windowX-obs_size.x);
-    // std::uniform_real_distribution<double> distry(0,windowY-obs_size.y);
+    std::uniform_real_distribution<double> distrx(app_data_->getControlPaneWidth() + default_circobs_radius_,gui_window_selector_size_.x - default_circobs_radius_);
+    std::uniform_real_distribution<double> distry(default_circobs_radius_,app_data_->getMapY() - default_circobs_radius_);
+
+    if (!app_data_->circle_obs_array.array.empty()){app_data_->circle_obs_array.array.clear();} 
+    if (!app_data_->rect_obs_array.array.empty()){app_data_->rect_obs_array.array.clear();}
+
+    while (successful_points < required_points)
+    {
+        bool checkStatus = true;
+        double randx=distrx(engx);
+        double randy=distry(engy);
+        Vec2D randPoint(randx,randy);
+        
+        for (const auto &obs: app_data_->circle_obs_array.array)
+        {
+            double centre_dist = sqrt(pow(randPoint.x()-obs.getPosition().x,2) + pow(randPoint.y()-obs.getPosition().y,2));
+            double longest_centre_dist = 2 * default_circobs_radius_;
+            double buffer = 3;
+            if (centre_dist < longest_centre_dist + buffer - EPS)
+            {
+                checkStatus = false;
+                break;
+            }
+        }
+
+        for (const auto &obs: app_data_->rect_obs_array.array)
+        {
+            double centre_dist = sqrt(pow(randPoint.x()-obs.getPosition().x,2) + pow(randPoint.y()-obs.getPosition().y,2));
+            double longest_centre_dist = 2 * default_circobs_radius_;
+            double buffer = 3;
+            if (centre_dist < longest_centre_dist + buffer - EPS)
+            {
+                checkStatus = false;
+                break;
+            }
+        }
+        if (checkStatus)
+        {
+            if (!circle_or_rect_switch)
+            {
+                CircleObstacle newObs(this->default_circobs_radius_,randPoint);
+                app_data_->circle_obs_array.array.push_back(newObs);
+            }
+            else
+            {
+                RectangleObstacle newObs(this->default_rectobs_size_,randPoint);
+                app_data_->rect_obs_array.array.push_back(newObs);
+            }
+            circle_or_rect_switch =! circle_or_rect_switch;
+            successful_points ++ ;
+        }
+    }
+    std::cout<<"[ObstacleSelector]: " << app_data_->circle_obs_array.array.size() << " Circle Obstacles created!\n";
+    std::cout<<"[ObstacleSelector]: " << app_data_->rect_obs_array.array.size() << " Rectangle Obstacles created!\n";
+}
+
+void PlannerGUI::GenerateGrids()
+{
+    int x_lower=app_data_->getControlPaneWidth();
+    int x_higher=app_data_->getMapX()+x_lower;
+    int y_lower = 0;
+    int y_higher = app_data_ ->getMapY();
+    for (int i=x_lower+resolution_.first; i<x_higher ; i+=resolution_.first)
+    {
+        sf::Vector2f pt1(i,0);
+        sf::Vector2f pt2(i,y_higher-1);
+        sf::Vertex vertical_line[]=
+        {
+            sf::Vertex(pt1),
+            sf::Vertex(pt2)
+        };
+        this->gui_window_selector_.draw(vertical_line,2,sf::Lines);
+    }
+    for (int i=y_lower+resolution_.second; i<y_higher ; i+=resolution_.second)
+    {
+        sf::Vector2f pt1(0,i);
+        sf::Vector2f pt2(x_higher-1,i);
+        sf::Vertex horizontal_line[]=
+        {
+            sf::Vertex(pt1),
+            sf::Vertex(pt2)
+        };
+        this->gui_window_selector_.draw(horizontal_line,2,sf::Lines);
+    }
+}
+
+void PlannerGUI::GenerateRandomDiscrete()
+{
+    int successful_points = 0;
+    int required_points = app_data_->getNumRandomObs();
+    int num_cols = app_data_->getMapX() / app_data_->getResolution().first;
+    int num_rows = app_data_->getMapY() / app_data_->getResolution().second;
+    int possible_points = num_cols * num_rows;
+    required_points = required_points >= possible_points ? possible_points * 0.6 : required_points; //default to 60% of the map if its too large
+    int x_min = 0;
+    int x_max = num_cols;
+    int y_min = 0;
+    int y_max = num_rows;
+
+
+    std::random_device rdx;
+    std::random_device rdy;
+
+    std::default_random_engine engx(rdx());
+    std::default_random_engine engy(rdy());
+    
+    std::uniform_int_distribution<int> distrx(x_min , x_max - 1);
+    std::uniform_int_distribution<int> distry(y_min , y_max - 1);
+
+    if (!app_data_->circle_obs_array.array.empty()){app_data_->circle_obs_array.array.clear();} 
+    if (!app_data_->rect_obs_array.array.empty()){app_data_->rect_obs_array.array.clear();}
+
+    std::vector<int> tracker(num_cols*num_rows , 0);
+    while (successful_points < required_points)
+    {
+        bool checkStatus = true;
+        double randx=distrx(engx);
+        double randy=distry(engy);
+        Vec2D randPoint_discrete(randx,randy);
+        int flattened_coords = num_cols * randy + randx;
+        if (tracker[flattened_coords])
+        {
+            checkStatus = false;
+        }  
+        if (checkStatus)
+        {
+            tracker[flattened_coords] = 1;
+            Vec2D randPoint_continuous = randPoint_discrete.GridSpaceToContinuousSpace(app_data_ ->getResolution(),app_data_->getControlPaneWidth(),0);
+            RectangleObstacle newobs(sf::Vector2f(this->resolution_.first,this->resolution_.second),randPoint_continuous);
+            app_data_->rect_obs_array.array.push_back(newobs);
+            successful_points ++ ;
+        }
+    }
+    std::cout<<"[ObstacleSelector]: " << app_data_->circle_obs_array.array.size() << " Circle Obstacles created!\n";
+    std::cout<<"[ObstacleSelector]: " << app_data_->rect_obs_array.array.size() << " Rectangle Obstacles created!\n";
 }

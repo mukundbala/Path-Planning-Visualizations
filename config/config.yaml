@@ -1,6 +1,7 @@
 
 map_width: 1280
 
+num_random_obstacles: 400
 continuous_planner:  
   - rrt
   - rrtstar
