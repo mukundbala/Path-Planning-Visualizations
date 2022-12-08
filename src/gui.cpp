@@ -333,7 +333,10 @@ void PlannerGUI::runObstacleSelector()
     sf::Int32 neg_mouse_time = 0;
     sf::Vector2f pos_mouse_pos = {-1,-1};
     sf::Vector2f neg_mouse_pos = {-1,-1};
-    std::vector<int> discrete_point_tester((app_data_->getMapX() / resolution_.first) * (app_data_->getMapY() / resolution_.second),0);
+    
+    //handle duplicate checking for discrete points faster (in O(1)) using boolean flat array 
+    std::vector<int> discrete_point_tester((app_data_->getMapX() / resolution_.first) * (app_data_->getMapY() / resolution_.second),0); 
+    
     while (gui_window_selector_.isOpen())
     {
         sf::Event event;
@@ -437,8 +440,8 @@ void PlannerGUI::runObstacleSelector()
                     {
                         Vec2D pos_cont_non_origin(posx,posy);
                         Vec2D pos_grid = pos_cont_non_origin.ContinuousSpaceToGridSpace(resolution_,gui_window_selector_size_.x,gui_window_selector_size_.y,app_data_->getControlPaneWidth(),0);
-                        //num_cols * randy + randx;
-                        int idx_to_check = (app_data_->getMapX() / resolution_.first) * pos_grid.y() + pos_grid.x();
+                        int num_cols = (app_data_->getMapX() / resolution_.first);
+                        int idx_to_check =  num_cols * pos_grid.y() + pos_grid.x();
                         bool isPointValid = !discrete_point_tester[idx_to_check];
                         if (isPointValid)
                         {
@@ -519,32 +522,68 @@ void PlannerGUI::runObstacleSelector()
 
         if (state == Actions::ResetLastCircle)
         {
-            
-            if (app_data_->circle_obs_array.array.size()>0)
+            if (app_data_ ->getChosenMap() == "discrete")
             {
-                app_data_->circle_obs_array.array.pop_back();
-                state=Actions::DrawCircle; //reset state
-                std::cout << "[Obstacle Selector]: Circle Obstacles Removed!\n";
+                assert(app_data_ ->circle_obs_array.array.empty());
+                std::cout<<"[Obstacle Selector]: Circle obstacles unavailable for discrete map.\n";
+                state = Actions::DrawRectangle;
             }
-            else 
+            else if (app_data_->getChosenMap() == "continuous")
             {
-                std::cout << "[Obstacle Selector]: No Circle Obstacles Left!\n";
-                state = Actions::DrawCircle; //reset state
+                if (app_data_->circle_obs_array.array.size()>0)
+                {
+                    app_data_->circle_obs_array.array.pop_back();
+                    state=Actions::DrawCircle; //reset state
+                    std::cout << "[Obstacle Selector]: Circle Obstacles Removed!\n";
+                }
+                else 
+                {
+                    std::cout << "[Obstacle Selector]: No Circle Obstacles Left!\n";
+                    state = Actions::DrawCircle; //reset state
+                }
             }
         }
         
         else if (state == Actions::ResetLastRectangle)
         {
-            if (app_data_->rect_obs_array.array.size()>0)
-            {
-                app_data_->rect_obs_array.array.pop_back();
-                std::cout << "[Obstacle Selector]: Rectangle Obstacles Removed!\n";
-                state = Actions::DrawRectangle;
+            if (app_data_->getChosenMap()=="continuous")
+            {    
+                if (app_data_->rect_obs_array.array.size()>0)
+                {
+                    app_data_->rect_obs_array.array.pop_back();
+                    std::cout << "[Obstacle Selector]: Rectangle Obstacle Removed!\n";
+                    state = Actions::DrawRectangle;
+                }
+                else
+                {
+                    std::cout << "[Obstacle Selector]: No Rectangle Obstacles Left\n";
+                    state = Actions::DrawRectangle; //reset state
+                }
             }
-            else
+            else if (app_data_->getChosenMap()=="discrete")
             {
-                std::cout << "[Obstacle Selector]: No Rectangle Obstacles Left\n";
-                state = Actions::DrawRectangle; //reset state
+                if (app_data_->rect_obs_array.array.size() > 0)
+                {
+                    Vec2D cont_global_coords;
+                    cont_global_coords.x(app_data_ -> rect_obs_array.array.at(app_data_->rect_obs_array.array.size()-1).getPosition().x);
+                    cont_global_coords.y(app_data_ -> rect_obs_array.array.at(app_data_->rect_obs_array.array.size()-1).getPosition().y);
+                    Vec2D grid_coords = cont_global_coords.ContinuousSpaceToGridSpace(this->resolution_,gui_window_selector_size_.x,gui_window_selector_size_.y,app_data_->getControlPaneWidth(),0);
+                    std::cout<<"Global Coords:\n";
+                    cont_global_coords.print();
+                    std::cout<<"Grid Coords:\n";
+                    grid_coords.print();
+                    int num_col = app_data_->getMapX() / resolution_.first;
+                    int flattened_coords = num_col * grid_coords.y() + grid_coords.x();
+                    std::cout<<"Flattened Coord: "<<flattened_coords<<"\n";
+                    discrete_point_tester[flattened_coords] = 0;
+                    app_data_ ->rect_obs_array.array.pop_back();
+                    std::cout << "[ObstacleSelector]: Rectangle Obstacle Removed!\n";
+                    state = Actions::DrawRectangle;
+                }
+                else
+                {
+                    std::cout<<"[ObstacleSelector]: No Rectangle Obstacles left\n";
+                }
             }
         }
 
@@ -560,8 +599,15 @@ void PlannerGUI::runObstacleSelector()
                 app_data_->rect_obs_array.array.clear();
             }
 
+            if (app_data_->getChosenMap() == "discrete")
+            {
+                for (auto& a: discrete_point_tester)
+                {
+                    a = 0;
+                }
+            }
             std::cout << "[Obstacle Selector]: Obstacle selections cleared!\n";
-            state = Actions::DrawCircle;
+            state = Actions::DrawRectangle;
 
         }
 
@@ -570,10 +616,10 @@ void PlannerGUI::runObstacleSelector()
             if (app_data_->getChosenMap() == "continuous")
             {
                 GenerateRandomContinuous();
-                state=Actions::DrawCircle;
+                state=Actions::DrawRectangle;
             }
             else if (app_data_->getChosenMap() == "discrete"){
-                GenerateRandomDiscrete();
+                GenerateRandomDiscrete(discrete_point_tester);
                 state=Actions::DrawRectangle;
             }
         }
@@ -700,7 +746,7 @@ void PlannerGUI::GenerateGrids()
     }
 }
 
-void PlannerGUI::GenerateRandomDiscrete()
+void PlannerGUI::GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker)
 {
     int successful_points = 0;
     int required_points = app_data_->getNumRandomObs();
@@ -713,7 +759,7 @@ void PlannerGUI::GenerateRandomDiscrete()
     int y_min = 0;
     int y_max = num_rows;
 
-
+    //we generate coordinates in gridspace here
     std::random_device rdx;
     std::random_device rdy;
 
@@ -725,28 +771,46 @@ void PlannerGUI::GenerateRandomDiscrete()
 
     if (!app_data_->circle_obs_array.array.empty()){app_data_->circle_obs_array.array.clear();} 
     if (!app_data_->rect_obs_array.array.empty()){app_data_->rect_obs_array.array.clear();}
-
-    std::vector<int> tracker(num_cols*num_rows , 0);
+    for (auto& a : discrete_point_tracker)
+    {
+        a = 0;
+    }
     while (successful_points < required_points)
     {
         bool checkStatus = true;
         double randx=distrx(engx);
         double randy=distry(engy);
         Vec2D randPoint_discrete(randx,randy);
-        int flattened_coords = num_cols * randy + randx;
-        if (tracker[flattened_coords])
-        {
-            checkStatus = false;
-        }  
+        checkStatus = checkDiscretePoint(randPoint_discrete,discrete_point_tracker,app_data_->getMapX());
         if (checkStatus)
         {
-            tracker[flattened_coords] = 1;
             Vec2D randPoint_continuous = randPoint_discrete.GridSpaceToContinuousSpace(app_data_ ->getResolution(),app_data_->getControlPaneWidth(),0);
             RectangleObstacle newobs(sf::Vector2f(this->resolution_.first,this->resolution_.second),randPoint_continuous);
             app_data_->rect_obs_array.array.push_back(newobs);
             successful_points ++ ;
         }
     }
+    int count = 0;
+    for (const auto& a : discrete_point_tracker)
+    {
+        count+=a;
+    }
+    assert(count == successful_points && count == app_data_->rect_obs_array.array.size());
     std::cout<<"[ObstacleSelector]: " << app_data_->circle_obs_array.array.size() << " Circle Obstacles created!\n";
     std::cout<<"[ObstacleSelector]: " << app_data_->rect_obs_array.array.size() << " Rectangle Obstacles created!\n";
 }
+
+bool PlannerGUI::checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<int> &discrete_point_tracker, int map_size_x)
+{
+    bool pointOk = true;
+    int num_col = map_size_x / resolution_.first;
+    int flattened_coords = num_col * grid_space_coord.y() + grid_space_coord.x();
+    pointOk = !discrete_point_tracker[flattened_coords];
+
+    if (pointOk)
+    {
+        //update the point tracker array. We will select this point
+        discrete_point_tracker[flattened_coords] = 1;
+    }
+    return pointOk;
+}   

@@ -99,8 +99,8 @@ public:
     void GenerateRandomContinuous();
 
     void GenerateGrids();
-    void GenerateRandomDiscrete();
-    
+    void GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker);
+    bool checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<int> &discrete_point_tracker, int map_size_x);
 
     
     

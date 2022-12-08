@@ -209,9 +209,9 @@ Vec2D Vec2D::ContinuousSpaceToGridSpace(const std::pair<int,int>& rez,double x_m
 
     x = x == (x_max / rez.first) ?  x - 1 : x;
     y = y == (y_max / rez.second) ? y - 1 : y;
-    grid_pt.x(x);
+    grid_pt.x(x); 
     grid_pt.y(y);
-    return grid_pt;
+    return grid_pt; //grid space
 }
 
 Vec2D Vec2D::GridSpaceToContinuousSpace(const std::pair<int,int>& rez, double x_min_cont, double y_min_cont)const
@@ -219,7 +219,7 @@ Vec2D Vec2D::GridSpaceToContinuousSpace(const std::pair<int,int>& rez, double x_
     Vec2D continuous_coords;
     continuous_coords.x(x_min_cont + (this->x_ * rez.first) + (rez.first / 2));
     continuous_coords.y(y_min_cont + (this->y_ * rez.second) + (rez.second / 2));
-    return continuous_coords;
+    return continuous_coords; //the origin in global continuous coordinates
 }
 
 void Vec2D::print()const
