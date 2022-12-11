@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <random>
+#include <algorithm>
 #include <obstacles.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -17,7 +18,6 @@ class AppData
 {
 private:
     std::string chosen_map_type_; //the map type (discrete or continuous)
-    std::string chosen_obstacle_mode; //custom or random
     std::string chosen_planner_; //the type of planner
 
     int gui_window_x_;
@@ -77,9 +77,11 @@ private:
     double default_circobs_radius_; //used for generating obstacles in random mode
     std::pair<int,int> resolution_;
     double EPS;
+    bool run_state_;
 
 public:
     PlannerGUI(std::shared_ptr<AppData> data);
+    ~ PlannerGUI() noexcept;
     void run();
     void runObstacleSelector();
     //callbacks
@@ -102,10 +104,7 @@ public:
     void GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker);
     bool checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<int> &discrete_point_tracker, int map_size_x);
 
-    
-    
-    
-
+    bool DataTest(); 
     enum class Actions:unsigned short
     {
         NotStarted,
@@ -120,5 +119,6 @@ public:
     //widgets
 
 };
+
 
 #endif // GUI_HPP

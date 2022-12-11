@@ -106,7 +106,23 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     default_rectobs_size_ = {default_circobs_radius_*2,default_circobs_radius_*2};
     EPS=app_data_->getEPS();
     resolution_ = app_data_->getResolution();
+    run_state_ = true;
     std::cout << "[PlannerGUI]: Planner GUI initialized!\n";
+}
+
+PlannerGUI::~PlannerGUI() noexcept
+{
+
+    if (gui_window_chooser_.isOpen())
+    {
+        gui_window_chooser_.close();
+    }
+    if (gui_window_selector_.isOpen())
+    {
+        gui_window_selector_.close();
+    }
+    app_data_.reset();
+    std::cout<<"[PlannerGUI]: Closing GUI now\n";
 }
 
 void PlannerGUI::run()
@@ -120,6 +136,7 @@ void PlannerGUI::run()
             if (event.type == sf::Event::Closed)
             {
                 gui_window_chooser_.close();
+                run_state_= false;
             }
         }
         //gui_window_.clear(sf::Color::Red);
@@ -132,7 +149,11 @@ void PlannerGUI::run()
         gui_window_chooser_.clear(sf::Color::Red);
     }
     sf::sleep(sf::seconds(1));
-    runObstacleSelector();       
+    if (!run_state_)
+    {
+        return; //end here
+    }
+    runObstacleSelector();      
 }
 
 void PlannerGUI::DrawHomeScreen()
@@ -181,6 +202,7 @@ void PlannerGUI::DrawHomeScreen()
 
 void PlannerGUI::quitCallback()
 {
+    this->run_state_ = false;
     gui_window_chooser_.close(); //ToDO, use RAII standards to release resources using destructor
 }
 
@@ -346,6 +368,7 @@ void PlannerGUI::runObstacleSelector()
             if (event.type == sf::Event::Closed)
             {
                 gui_window_selector_.close();
+                run_state_ = false;
             }
 
             if (app_data_->getChosenMap()=="continuous")
@@ -519,6 +542,12 @@ void PlannerGUI::runObstacleSelector()
                                                 {return;}
                                                 state=Actions::Done;});
         gui_backend_selector_.add(done_button);
+
+        if (state ==  Actions::Done)
+        {
+            gui_window_selector_.close();
+            return;
+        }
 
         if (state == Actions::ResetLastCircle)
         {
@@ -769,7 +798,7 @@ void PlannerGUI::GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker
     std::uniform_int_distribution<int> distrx(x_min , x_max - 1);
     std::uniform_int_distribution<int> distry(y_min , y_max - 1);
 
-    if (!app_data_->circle_obs_array.array.empty()){app_data_->circle_obs_array.array.clear();} 
+    if (!app_data_->circle_obs_array.array.empty()){app_data_->circle_obs_array.array.clear();}
     if (!app_data_->rect_obs_array.array.empty()){app_data_->rect_obs_array.array.clear();}
     for (auto& a : discrete_point_tracker)
     {
@@ -813,4 +842,112 @@ bool PlannerGUI::checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<in
         discrete_point_tracker[flattened_coords] = 1;
     }
     return pointOk;
-}   
+}
+
+bool PlannerGUI::DataTest()
+{
+    bool pass = true;
+
+    if (app_data_->getChosenMap() != "discrete" && app_data_->getChosenMap() != "continuous")
+    {
+        pass = false;
+        std::cout<<"[PlannerGUI]: Map type can only be discrete or continuous. It is not set correctly!\n";
+        return false;
+    }
+
+    if (app_data_->getChosenMap() == "continuous")
+    {
+        std::string planner = app_data_->getChosenPlanner();
+        std::cout<<planner<<"\n";
+        bool check = false;
+        for (const auto& a:app_data_->continuous_planners)
+        {
+            std::cout<<a<<"\n";
+            if (a == planner)
+            {
+                check = true;
+            }
+        }
+        if (!check)
+        {
+            pass = false;
+            std::cout<<"[PlannerGUI]: Planner is invalid!\n";
+            return pass;
+        }
+    }
+
+    else if (app_data_->getChosenMap() == "discrete")
+    {
+        std::string planner = app_data_->getChosenPlanner();
+        std::cout<<planner<<"\n";
+        bool check = false;
+        for (const auto& a:app_data_->discrete_planners)
+        {
+            std::cout<<a<<"\n";
+            if (a == planner)
+            {
+                check = true;
+            }
+        }
+        if (!check)
+        {
+            pass = false;
+            std::cout<<"[PlannerGUI]: Planner is invalid!\n";
+            return pass;
+        }
+    }
+
+    int rez_x = app_data_->getResolution().first;
+    int rez_y = app_data_->getResolution().second;
+    
+    if (rez_x != rez_y && app_data_->getChosenMap() == "discrete")
+    {
+        std::cout<<"[PlannerGUI]: Invalid Resolution. Resolution must be equal\n";
+        pass = false;
+        return pass;
+    }
+
+    else
+    {
+        int map_x = app_data_->getMapX();
+        int map_y = app_data_->getMapY();
+        
+        if (map_x % rez_x != 0 || map_y % rez_y != 0)
+        {
+            std::cout<<"[PlannerGUI]: Invalid Resolutuon. Resolution does not evenly divide the map!\n";
+            pass = false;
+            return pass;
+        }
+    }
+
+    std::cout<<"[DataCheck]: Checking app data now!\n";
+    std::cout<<"######SUMMARY#######\n";
+    std::cout<<"[DataCheck]: Chosen Map Type: "<<app_data_->getChosenMap()<<"\n";
+    std::cout<<"[DataCheck]: Chosen Planner: "<<app_data_->getChosenPlanner()<<"\n";
+    std::cout<<"[DataCheck]: Map Size: "<<"("<<app_data_->getMapX()<<","<<app_data_->getMapY()<<")\n";
+    if (app_data_->getChosenMap() == "discrete")
+    {
+        std::cout<<"[DataCheck]: Resolution: "<<"("<<app_data_->getResolution().first<<","<<app_data_->getResolution().second<<")\n";
+    }
+    int num_circ_obs = app_data_->circle_obs_array.array.size();
+    int num_rect_obs = app_data_->rect_obs_array.array.size();
+    int total_obstacles = num_circ_obs + num_rect_obs;
+    if (total_obstacles == 0)
+    {
+        std::cout<<"[DataCheck]: No obstacles have been created. Are you sure you want an empty map?Y/N\n";
+        std::string ans;
+        std::cin>>ans;
+        if (ans == "N" || ans == "n")
+        {
+            pass = false;
+            std::cout<<"[DataCheck]: Please restart planner gui, and remember to add obstacles!\n";
+            return pass;
+        }
+    }
+    else
+    {
+        std::cout<<"[DataCheck]: You have created "<<total_obstacles<<" obstacles\n";
+    }
+    std::cout<<"#####################\n";
+    return pass;
+}
