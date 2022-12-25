@@ -7,6 +7,7 @@
 #include <memory>
 #include <random>
 #include <algorithm>
+
 #include <obstacles.hpp>
 #include <data.hpp>
 #include <yaml-cpp/yaml.h>
