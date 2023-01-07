@@ -3,12 +3,12 @@ map_width: 900
 
 num_random_obstacles: 400
 continuous_planner:  
-  - rrt
-  - rrtstar
-  - rrtmarch
+  - RRT
+  - RRT*
+  - RRTMarch
 
 discrete_planner:
-  - bfs
-  - dfs
+  - BFS
+  - DFS
   
 resolution: [20,20]

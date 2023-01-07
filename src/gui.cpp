@@ -13,7 +13,7 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     dark_theme_.setDefault("themes/Black.txt");
     screen_num = 0;
     default_circobs_radius_ = 10;
-    default_rectobs_size_ = {default_circobs_radius_*2,default_circobs_radius_*2};
+    default_rectobs_size_ = {(float)default_circobs_radius_*2,(float)default_circobs_radius_*2};
     EPS=app_data_->getEPS();
     resolution_ = app_data_->getResolution();
     run_state_ = true;
