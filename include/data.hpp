@@ -23,7 +23,6 @@ public:
     AppData();
     
     std::string getChosenMap();
-    
     std::string getChosenPlanner();
 
     int getGUIWindowX()const;

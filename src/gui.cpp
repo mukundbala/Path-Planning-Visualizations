@@ -390,25 +390,25 @@ void PlannerGUI::runObstacleSelector()
         gui_backend_selector_.removeAllWidgets();
 
         auto circle_obs_button = tgui::Button::create();
-        circle_obs_button->setSize(80,80);
-        circle_obs_button->setPosition(60,100);
-        circle_obs_button->setText("Draw\nCircle");
+        circle_obs_button->setSize(160,80);
+        circle_obs_button->setPosition(20,100);
+        circle_obs_button->setText("Draw Circle");
         circle_obs_button->setTextSize(15);
         circle_obs_button->onMousePress([&]{state=Actions::DrawCircle;});
         gui_backend_selector_.add(circle_obs_button);
         
         auto rectangle_obs_button = tgui::Button::create();
-        rectangle_obs_button->setSize(80,80);
-        rectangle_obs_button->setPosition(60,200);
-        rectangle_obs_button->setText(" Draw\nRectangle");
+        rectangle_obs_button->setSize(160,80);
+        rectangle_obs_button->setPosition(20,200);
+        rectangle_obs_button->setText(" Draw Rectangle");
         rectangle_obs_button->setTextSize(15);
         rectangle_obs_button->onMousePress([&]{state=Actions::DrawRectangle;});
         gui_backend_selector_.add(rectangle_obs_button);
         
         auto reset_last_circle_obs_button = tgui::Button::create();
-        reset_last_circle_obs_button->setSize(80,80);
-        reset_last_circle_obs_button->setPosition(60,300);
-        reset_last_circle_obs_button->setText("Reset\nLastCircle");
+        reset_last_circle_obs_button->setSize(160,80);
+        reset_last_circle_obs_button->setPosition(20,300);
+        reset_last_circle_obs_button->setText("Reset Last Circle");
         reset_last_circle_obs_button->setTextSize(15);
         reset_last_circle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
                                                 {return;}
@@ -416,9 +416,9 @@ void PlannerGUI::runObstacleSelector()
         gui_backend_selector_.add(reset_last_circle_obs_button);
 
         auto reset_last_rectangle_obs_button = tgui::Button::create();
-        reset_last_rectangle_obs_button->setSize(80,80);
-        reset_last_rectangle_obs_button->setPosition(60,400);
-        reset_last_rectangle_obs_button->setText("Reset\nLastRect");
+        reset_last_rectangle_obs_button->setSize(160,80);
+        reset_last_rectangle_obs_button->setPosition(20,400);
+        reset_last_rectangle_obs_button->setText("Reset Last Rectangle");
         reset_last_rectangle_obs_button->setTextSize(15);
         reset_last_rectangle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
                                                 {return;}
@@ -426,8 +426,8 @@ void PlannerGUI::runObstacleSelector()
         gui_backend_selector_.add(reset_last_rectangle_obs_button);
         
         auto reset_all_obstacle_button = tgui::Button::create();
-        reset_all_obstacle_button->setSize(80,80);
-        reset_all_obstacle_button->setPosition(60,500);
+        reset_all_obstacle_button->setSize(160,80);
+        reset_all_obstacle_button->setPosition(20,500);
         reset_all_obstacle_button->setText("Reset\n All");
         reset_all_obstacle_button->setTextSize(15);
         reset_all_obstacle_button->onMousePress([&]{if(state == Actions::NotStarted)
@@ -436,16 +436,16 @@ void PlannerGUI::runObstacleSelector()
         gui_backend_selector_.add(reset_all_obstacle_button);
         
         auto random_obstacle_button = tgui::Button::create();
-        random_obstacle_button->setSize(80,80);
-        random_obstacle_button->setPosition(60,600);
-        random_obstacle_button->setText("Random\nObstacle");
+        random_obstacle_button->setSize(160,80);
+        random_obstacle_button->setPosition(20,600);
+        random_obstacle_button->setText("Random Obstacle");
         random_obstacle_button->setTextSize(15);
         random_obstacle_button->onMousePress([&]{state=Actions::Random;});
         gui_backend_selector_.add(random_obstacle_button);
         
         auto done_button = tgui::Button::create();
-        done_button->setSize(80,80);
-        done_button->setPosition(60,700);
+        done_button->setSize(160,80);
+        done_button->setPosition(20,700);
         done_button->setText("Done");
         done_button->setTextSize(15);
         done_button->onMousePress([&]{if(state == Actions::NotStarted)

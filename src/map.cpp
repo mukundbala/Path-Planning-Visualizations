@@ -7,14 +7,18 @@ BaseMap::BaseMap(std::shared_ptr<AppData>  my_data) : data_{my_data}
     control_pane_width_ = data_->getControlPaneWidth();
     window_x_ = map_x_ + control_pane_width_;
     window_y_ = map_y_;
-    planner_ = data_->getChosenPlanner();
-
-    map_window_.create(sf::VideoMode(window_x_,window_y_,32),planner_);
+    planner_name_ = data_->getChosenPlanner();
+    map_name_ = data_->getChosenMap();
+    toupper(map_name_[0]);
+    dark_theme_.setDefault("themes/Black.txt");
+    map_window_.create(sf::VideoMode(window_x_,window_y_,32),planner_name_);
     map_window_gui_.setTarget(map_window_);
+    clicks_ = 0;
     
-    program_state_ = State::NotStarted;
-    prep_complete_ = false;
-    plan_complete_ = false;
+    program_state_ = MapState::NotStarted;
+    states_ = {"Not Started", "Prep Complete" , "Undo Selections" , "Start Planner", "Planning Complete" , "Show Path" , "Show All" , "Quit"};
+
+    createControlPane();
 
     LINE_COLOR = sf::Color::White;
     POINT_COLOR = sf::Color::Cyan;
@@ -22,8 +26,9 @@ BaseMap::BaseMap(std::shared_ptr<AppData>  my_data) : data_{my_data}
     START_COLOR = sf::Color::Green;
     END_COLOR = sf::Color::Magenta;
     PATH_COLOR = sf::Color::Yellow;
+    CONTROL_PANE_COLOR = sf::Color::Yellow;
 
-    std::cout<<"[ContinuousMap]:Base Map Built!\n";
+    std::cout<<"[" + map_name_+"]:Base Map Built!\n";
 }
 
 
@@ -32,66 +37,75 @@ BaseMap::~BaseMap()
     data_.reset();
 }
 
-void BaseMap::drawBaseScreen()
+void BaseMap::createControlPane()
 {
     this->map_window_gui_.removeAllWidgets();
-    this->select_start_button=tgui::Button::create();
-    select_start_button -> setSize(160,80);
-    select_start_button -> setPosition(20,100);
-    select_start_button -> setText("Select Start Point!");
-    select_start_button -> setTextSize(15);
-    select_start_button -> onMousePress([&]{program_state_ = State::SelectStart;});
-
-    this->select_end_button=tgui::Button::create();
-    select_end_button -> setSize(160,80);
-    select_end_button -> setPosition(20,200);
-    select_end_button -> setText("Select End Point!");
-    select_end_button -> setTextSize(15);
-    select_end_button -> onMousePress([&]{this->program_state_ = State::SelectEnd;});
-
+    
+    this->message_label = tgui::Label::create();
+    message_label->setRenderer(dark_theme_.getRenderer("Label"));
+    std::string message_label_text = "Please select start point(right mouse click)\nand end point (left mouse click)";
+    message_label->setText(message_label_text);
+    message_label->setSize(180,180);
+    message_label->setPosition(0,0);
+    message_label->setTextSize(20);
+    
+    this->start_planning_button=tgui::Button::create();
+    start_planning_button -> setSize(160,80);
+    start_planning_button -> setPosition(20,200);
+    start_planning_button -> setText("StartPlanner");
+    start_planning_button -> setTextSize(15);
+    start_planning_button -> onMousePress([&]{this->program_state_ = MapState::StartPlanner;});
+    
     this->undo_selections_button=tgui::Button::create();
     undo_selections_button -> setSize(160,80);
     undo_selections_button -> setPosition(20,300);
-    undo_selections_button -> setText("Undo Selections!");
+    undo_selections_button -> setText("Undo Selections");
     undo_selections_button -> setTextSize(15);
-    undo_selections_button -> onMousePress([&]{this->program_state_ = State::UndoSelections;});
-
-    this->start_plan_button=tgui::Button::create();
-    start_plan_button -> setSize(160,80);
-    start_plan_button -> setPosition(20,400);
-    start_plan_button -> setText("Start Planning!");
-    start_plan_button -> setTextSize(15);
-    start_plan_button -> onMousePress([&]{this->program_state_ = State::StartPlan;});
+    undo_selections_button -> onMousePress([&]{this->program_state_ = MapState::UndoSelections;});
 
     this->show_path_button=tgui::Button::create();
     show_path_button -> setSize(160,80);
-    show_path_button -> setPosition(20,500);
-    show_path_button -> setText("Start Planning!");
+    show_path_button -> setPosition(20,400);
+    show_path_button -> setText("Show Path");
     show_path_button -> setTextSize(15);
-    show_path_button -> onMousePress([&]{this->program_state_ = State::StartPlan;});
+    show_path_button -> onMousePress([&]{this->program_state_ = MapState::ShowPath;});
+
+    this->show_all_button = tgui::Button::create();
+    show_all_button -> setSize(160,80);
+    show_all_button -> setPosition(20,500);
+    show_all_button -> setText("Show All");
+    show_all_button -> setTextSize(15);
+    show_all_button -> onMousePress([&]{this->program_state_ = MapState::ShowAll;});
 
     this->quit_button=tgui::Button::create();
     quit_button -> setSize(160,80);
     quit_button -> setPosition(20,600);
     quit_button -> setText("Quit!");
     quit_button -> setTextSize(15);
-    quit_button -> onMousePress([&]{this->program_state_ = State::End;});
-
-    sf::RectangleShape control_pane_background;
+    quit_button -> onMousePress([&]{this->program_state_ = MapState::Quit;});
+    
     control_pane_background.setPosition(0,0);
     control_pane_background.setSize(sf::Vector2f(control_pane_width_,map_y_));
     control_pane_background.setFillColor(sf::Color::Yellow);
-    
-    map_window_gui_.add(select_start_button,"SelectStart");
-    map_window_gui_.add(select_end_button,"SelectEnd");
-    map_window_gui_.add(undo_selections_button,"UndoSelections");
-    map_window_gui_.add(start_plan_button,"StartPlan");
-    map_window_gui_.add(show_path_button,"ShowPath");
-    map_window_gui_.add(quit_button,"QuitPlan");
 
+    map_window_gui_.add(message_label);
+    map_window_gui_.add(undo_selections_button,"UndoSelections");
+    map_window_gui_.add(start_planning_button,"StartPlanning");
+    map_window_gui_.add(show_path_button,"ShowPath");
+    map_window_gui_.add(show_all_button,"ShowAll");
+    map_window_gui_.add(quit_button,"QuitPlan");
+}
+
+void BaseMap::drawControlPane()
+{
     map_window_.draw(control_pane_background);
     map_window_gui_.draw();
-    
+}
+
+void BaseMap::showCurrentState()
+{
+    unsigned short n  = static_cast<unsigned short>(program_state_);
+    std::cout<<"["+map_name_+"]:"+states_[n]<<"\n";
 }
 
 ContinuousMap::ContinuousMap(std::shared_ptr<AppData> my_data):BaseMap(my_data)
@@ -126,49 +140,216 @@ void ContinuousMap::run()
             {
                 this->~ContinuousMap();
             }
-
-            if (!prep_complete_ && event.type == sf::Event::MouseButtonPressed)
+            if (event.type == sf::Event::MouseButtonPressed && program_state_==MapState::NotStarted)
             {
-                bool valid_pos = true;
-                Vec2D mouse_pos(event.mouseButton.x,event.mouseButton.y,-1,-1);
-                if (mouse_pos.x()<control_pane_width_ || mouse_pos.x()>=map_x_ || mouse_pos.y()<0 || mouse_pos.y()>=map_y_)
+                //bool is_point_valid = true;
+                sf::Vector2f mouse_position(event.mouseButton.x,event.mouseButton.y);
+                if (event.mouseButton.button == sf::Mouse::Right && start_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
                 {
-                    valid_pos = false;
-                }
-                if (valid_pos)
-                {
-                    if (program_state_ == State::SelectStart)
-                    {
-                        start_pt_.setCoords(mouse_pos.x(),mouse_pos.y());
-                        start_pt_.cost(0);
-                        start_pt_.idx(0);
-                        std::cout<<"[Map]: Start point set!\n";
-                    }
-                    else if (program_state_ == State::SelectEnd)
-                    {
-                        end_pt_.setCoords(mouse_pos.x(),mouse_pos.y());
-                        std::cout<<"[Map]: End point set!\n";
-                    }
+                    //we ensure that the right button has not been clicked before, so trying to click it multiple times will not work
+                    if (mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
+                    start_pt_.setCoords(mouse_position.x,mouse_position.y);
+                    start_pt_.idx(0);
+                    start_pt_.cost(0);
+                    clicks_++;
                 }
 
-                if (start_pt_.x()>=0 && end_pt_.x()>=0)
+                else if (event.mouseButton.button == sf::Mouse::Left && end_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
                 {
-                    prep_complete_ = true;
+                    end_pt_.setCoords(mouse_position.x,mouse_position.y);
+                    end_pt_.idx(0);
+                    end_pt_.cost(0);
+                    clicks_++;
+                }
+                
+                if (clicks_ == 2 && program_state_ == MapState::NotStarted)
+                {
+                    //state transition
+                    program_state_ = MapState::PrepComplete;
                 }
             }
         }
-        if (program_state_ == State::UndoSelections)
+        if (program_state_ == MapState::NotStarted)
         {
+            message_label -> setText("Please select start point (right mouse click) and end point (left mouse click)");
+            
+            //disabling buttons to prevent evil user inputs
+            //the only way the user can progress is to select the start and end points or quit
+            undo_selections_button -> setEnabled(false);
+            start_planning_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+
+            //enabling only selected buttons
+            quit_button -> setEnabled(true);
+
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            if (clicks_<2)
+            {
+                if (start_pt_.x()>=0)
+                {
+                    drawPoint(start_pt_,point_radius_,START_COLOR);
+                }
+                if (end_pt_.x()>=0)
+                {
+                    drawPoint(end_pt_,point_radius_,END_COLOR);
+                }
+            }
+        }
+        else if (program_state_ == MapState::UndoSelections)
+        {
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            //enabling only selected buttons
+            quit_button -> setEnabled(true);
+
             start_pt_.setCoords(-1,-1);
             start_pt_.cost(-1);
             start_pt_.idx(-1);
             end_pt_.setCoords(-1,-1);
-            prep_complete_ = false;
-            std::cout<<"[Map]:Points have been reset!\n";
+            clicks_ = 0;
+            program_state_ = MapState::NotStarted;
+            
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+
+            //showCurrentState();
         }
-        drawBaseScreen();
-        drawObstacles();
-        drawStartEnd();
+
+        else if (program_state_ == MapState::PrepComplete)
+        {
+            message_label -> setText("Start and end points selected. You may start the planner, or Undo Selections to reset these points");
+            
+            //disabling buttons to prevent evil user inputs
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+
+            //enabling only selected buttons
+            undo_selections_button -> setEnabled(true);
+            start_planning_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+            
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+
+            //showCurrentState();
+        }
+        
+        else if (program_state_ == MapState::StartPlanner)
+        {
+            message_label -> setText("Planning using " + planner_name_ + " now!");
+
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            //enabling only selected buttons
+            quit_button -> setEnabled(true);
+
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawEdges();
+            drawNodes();
+
+            //showCurrentState();
+        }
+
+        else if (program_state_ == MapState::PlanningComplete)
+        {
+            message_label -> setText("A path has been found!");
+            
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            //enabling only selected buttons
+            show_path_button -> setEnabled(true);
+            show_all_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+            
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawEdges();
+            drawNodes();
+            drawPath();
+
+            //showCurrentState();
+        }
+
+        else if (program_state_ == MapState::ShowPath)
+        {
+            message_label -> setText("Highlighting Path!");
+            
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            //enabling only selected buttons
+            show_all_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+            
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawPath();
+
+            //showCurrentState();
+        }
+
+        else if (program_state_ == MapState::ShowAll)
+        {
+            message_label -> setText("Showing search space and path!");
+
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+            //enabling only selected buttons
+            show_path_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawEdges();
+            drawNodes();
+            drawPath();
+
+            //showCurrentState();
+        }
+
+        else if (program_state_ == MapState::Quit)
+        {
+            message_label -> setText("Ending planner now. Goodbye!");
+            
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+
+            //showCurrentState();
+            //do stuff here to release resources
+        }
         map_window_.display();
     }
 }
@@ -217,8 +398,6 @@ void ContinuousMap::drawStartEnd()
 {
     drawPoint(this->start_pt_,this->point_radius_,START_COLOR);
     drawPoint(this->end_pt_,this->point_radius_,END_COLOR);
-    std::cout<<start_pt_.x()<<" "<<start_pt_.y()<<"\n";
-    std::cout<<end_pt_.x()<<" "<<end_pt_.y()<<"\n";
 }
 
 void ContinuousMap::drawObstacles()
@@ -232,4 +411,19 @@ void ContinuousMap::drawObstacles()
     {
         map_window_.draw(circle_obs.shape);
     }
+}
+
+void ContinuousMap::drawEdges()
+{
+
+}
+
+void ContinuousMap::drawNodes()
+{
+
+}
+
+void ContinuousMap::drawPath()
+{
+
 }
