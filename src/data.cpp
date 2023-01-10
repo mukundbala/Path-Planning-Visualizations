@@ -13,7 +13,7 @@ AppData::AppData()
     discrete_planners = loader["discrete_planner"].as<std::vector<std::string>>();
     resolution_ = std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
     num_random_obstacles = loader["num_random_obstacles"].as<int>();
-    EPS = 1e-6;
+    EPS = 1e-6; //load this from the yaml file!
     if (resolution_.first != resolution_.second)
     {
         resolution_ = std::make_pair(20,20);

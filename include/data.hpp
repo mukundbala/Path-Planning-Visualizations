@@ -15,6 +15,9 @@ private:
     int map_y_;
     int map_x_; //width of the map. This will be the only thing a user can control
     
+    Vec2D start_pt_;
+    Vec2D end_pt_;
+
     std::pair<int,int> resolution_; //resolution of discrete planner
     double EPS;
     int num_random_obstacles;
@@ -37,6 +40,10 @@ public:
     void setChosenMap(std::string type);
     
     void setChosenPlanner(std::string type);
+
+    void setStart(Vec2D &start);
+
+    void setEnd(Vec2D &end);
 
     std::vector<std::string> continuous_planners;
     

@@ -111,6 +111,8 @@ CircleObstacle::CircleObstacle(double radius_input,sf::Vector2f position_input):
     shape.setPosition(position);
 
     obstacle_type = "circle";
+
+    closeness_tolerance = 3.0;
 }
 
 CircleObstacle::CircleObstacle(double radius_input,Vec2D position_input):radius(radius_input)
@@ -126,6 +128,8 @@ CircleObstacle::CircleObstacle(double radius_input,Vec2D position_input):radius(
     shape.setPosition(position);
 
     obstacle_type = "circle";
+
+    closeness_tolerance = 3.0;
 }
 
 sf::Vector2f CircleObstacle::getOrigin()const
