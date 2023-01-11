@@ -14,7 +14,6 @@ BaseMap::BaseMap(std::shared_ptr<AppData>  my_data) : data_{my_data}
     map_window_.create(sf::VideoMode(window_x_,window_y_,32),planner_name_);
     map_window_gui_.setTarget(map_window_);
     clicks_ = 0;
-    
     program_state_ = MapState::NotStarted;
     states_ = {"Not Started", "Prep Complete" , "Undo Selections" , "Start Planner", "Planning Complete" , "Show Path" , "Show All" , "Quit"};
 
@@ -28,7 +27,7 @@ BaseMap::BaseMap(std::shared_ptr<AppData>  my_data) : data_{my_data}
     PATH_COLOR = sf::Color::Yellow;
     CONTROL_PANE_COLOR = sf::Color::Yellow;
 
-    std::cout<<"[" + map_name_+"]:Base Map Built!\n";
+    std::cout<<"[ContinuousMap]:Base Map Built!\n";
 }
 
 
@@ -45,41 +44,48 @@ void BaseMap::createControlPane()
     message_label->setRenderer(dark_theme_.getRenderer("Label"));
     std::string message_label_text = "Please select start point(right mouse click)\nand end point (left mouse click)";
     message_label->setText(message_label_text);
-    message_label->setSize(180,180);
+    message_label->setSize(180,280);
     message_label->setPosition(0,0);
     message_label->setTextSize(20);
     
     this->start_planning_button=tgui::Button::create();
     start_planning_button -> setSize(160,80);
-    start_planning_button -> setPosition(20,200);
+    start_planning_button -> setPosition(20,300);
     start_planning_button -> setText("StartPlanner");
     start_planning_button -> setTextSize(15);
     start_planning_button -> onMousePress([&]{this->program_state_ = MapState::StartPlanner;});
     
     this->undo_selections_button=tgui::Button::create();
     undo_selections_button -> setSize(160,80);
-    undo_selections_button -> setPosition(20,300);
+    undo_selections_button -> setPosition(20,400);
     undo_selections_button -> setText("Undo Selections");
     undo_selections_button -> setTextSize(15);
     undo_selections_button -> onMousePress([&]{this->program_state_ = MapState::UndoSelections;});
 
+    this->confirm_points_button = tgui::Button::create();
+    confirm_points_button -> setSize(160,80);
+    confirm_points_button -> setPosition(20,500);
+    confirm_points_button -> setText("Confirm Points?");
+    confirm_points_button -> setTextSize(15);
+    confirm_points_button -> onMousePress([&]{this->program_state_ = MapState::ConfirmPoints;});
+
     this->show_path_button=tgui::Button::create();
     show_path_button -> setSize(160,80);
-    show_path_button -> setPosition(20,400);
+    show_path_button -> setPosition(20,600);
     show_path_button -> setText("Show Path");
     show_path_button -> setTextSize(15);
     show_path_button -> onMousePress([&]{this->program_state_ = MapState::ShowPath;});
 
     this->show_all_button = tgui::Button::create();
     show_all_button -> setSize(160,80);
-    show_all_button -> setPosition(20,500);
+    show_all_button -> setPosition(20,700);
     show_all_button -> setText("Show All");
     show_all_button -> setTextSize(15);
     show_all_button -> onMousePress([&]{this->program_state_ = MapState::ShowAll;});
 
     this->quit_button=tgui::Button::create();
     quit_button -> setSize(160,80);
-    quit_button -> setPosition(20,600);
+    quit_button -> setPosition(20,800);
     quit_button -> setText("Quit!");
     quit_button -> setTextSize(15);
     quit_button -> onMousePress([&]{this->program_state_ = MapState::Quit;});
@@ -90,6 +96,7 @@ void BaseMap::createControlPane()
 
     map_window_gui_.add(message_label);
     map_window_gui_.add(undo_selections_button,"UndoSelections");
+    map_window_gui_.add(confirm_points_button,"ConfirmPoints");
     map_window_gui_.add(start_planning_button,"StartPlanning");
     map_window_gui_.add(show_path_button,"ShowPath");
     map_window_gui_.add(show_all_button,"ShowAll");
@@ -120,6 +127,12 @@ ContinuousMap::ContinuousMap(std::shared_ptr<AppData> my_data):BaseMap(my_data)
     end_pt_.cost(-1);
     end_pt_.idx(-1);
     point_radius_ = 3.0;
+    if (planner_name_ == "RRT")
+    {
+        std::cout<<"Initial planner creation done!\n";
+        continuous_planner_ = std::make_shared<RRT>(data_);
+    }
+    std::cout<<"[ContinuousMap]:Continuous Map Built!\n";
 }
 
 ContinuousMap::~ContinuousMap()
@@ -127,6 +140,7 @@ ContinuousMap::~ContinuousMap()
     map_window_gui_.removeAllWidgets();
     map_window_.close();
 }
+
 
 void ContinuousMap::run()
 {
@@ -162,11 +176,6 @@ void ContinuousMap::run()
                     clicks_++;
                 }
                 
-                if (clicks_ == 2 && program_state_ == MapState::NotStarted)
-                {
-                    //state transition
-                    program_state_ = MapState::PrepComplete;
-                }
             }
         }
         if (program_state_ == MapState::NotStarted)
@@ -175,19 +184,20 @@ void ContinuousMap::run()
             
             //disabling buttons to prevent evil user inputs
             //the only way the user can progress is to select the start and end points or quit
-            undo_selections_button -> setEnabled(false);
             start_planning_button -> setEnabled(false);
             show_path_button -> setEnabled(false);
             show_all_button -> setEnabled(false);
 
             //enabling only selected buttons
+            undo_selections_button -> setEnabled(true);
+            confirm_points_button -> setEnabled(true);
             quit_button -> setEnabled(true);
 
             //drawing our frame
             map_window_.clear();
             drawControlPane();
             drawObstacles();
-            if (clicks_<2)
+            if (clicks_<=2)
             {
                 if (start_pt_.x()>=0)
                 {
@@ -198,15 +208,18 @@ void ContinuousMap::run()
                     drawPoint(end_pt_,point_radius_,END_COLOR);
                 }
             }
+            map_window_.display();
         }
         else if (program_state_ == MapState::UndoSelections)
         {
+            message_label -> setText("Right click for start point, left click for end point. Once selected, you may confirm your selection or undo your selection");
             //disabling buttons to prevent evil user inputs
             start_planning_button -> setEnabled(false);
             show_path_button -> setEnabled(false);
             show_all_button -> setEnabled(false);
-            undo_selections_button -> setEnabled(false);
             //enabling only selected buttons
+            undo_selections_button -> setEnabled(true);
+            confirm_points_button -> setEnabled(true);
             quit_button -> setEnabled(true);
 
             start_pt_.setCoords(-1,-1);
@@ -220,20 +233,44 @@ void ContinuousMap::run()
             map_window_.clear();
             drawControlPane();
             drawObstacles();
+            map_window_.display();
+        }
 
-            //showCurrentState();
+        else if (program_state_ == MapState::ConfirmPoints)
+        {
+            if (start_pt_.x() == -1 || end_pt_.x() == -1)
+            {
+                message_label -> setText("Please finish selecting start point and end point!");
+                program_state_ = MapState::NotStarted;
+            }
+            else
+            {
+                message_label -> setText("Start and end points confirmed!. Preparing Planner!");
+                //now we can transition into PrepComplete
+                data_->setStart(start_pt_);
+                data_->setEnd(end_pt_);
+                continuous_planner_->updateBasePlannerStartEnd();
+                continuous_planner_->updateDerivedPlannerTree();
+                std::cout<<"[ContinuousMap]: Start and End points updated in planner\n";
+                program_state_ = MapState::PrepComplete;
+            }
+
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            map_window_.display();
         }
 
         else if (program_state_ == MapState::PrepComplete)
         {
-            message_label -> setText("Start and end points selected. You may start the planner, or Undo Selections to reset these points");
-            
+            message_label -> setText("Planner Prepared!. You may start the planner.");
             //disabling buttons to prevent evil user inputs
             show_path_button -> setEnabled(false);
             show_all_button -> setEnabled(false);
-
+            undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
             //enabling only selected buttons
-            undo_selections_button -> setEnabled(true);
             start_planning_button -> setEnabled(true);
             quit_button -> setEnabled(true);
             
@@ -242,33 +279,39 @@ void ContinuousMap::run()
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-
-            //showCurrentState();
+            map_window_.display();
         }
         
         else if (program_state_ == MapState::StartPlanner)
         {
             message_label -> setText("Planning using " + planner_name_ + " now!");
-
             //disabling buttons to prevent evil user inputs
             start_planning_button -> setEnabled(false);
             show_path_button -> setEnabled(false);
             show_all_button -> setEnabled(false);
             undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
             //enabling only selected buttons
             quit_button -> setEnabled(true);
 
-            //drawing our frame
+            continuous_planner_->plan();
+            
+            if (continuous_planner_->returnPlannerState() == ContinuousPlannerState::PlanningComplete)
+            {
+                program_state_ = MapState::PlanningComplete;
+                std::cout<<"[ContinuousMap]: Planning Complete\n";
+            }
+            map_window_.clear();
+            std::cout<<"################\n";
             map_window_.clear();
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-            drawEdges();
             drawNodes();
-
+            drawEdges();
+            map_window_.display();
             //showCurrentState();
         }
-
         else if (program_state_ == MapState::PlanningComplete)
         {
             message_label -> setText("A path has been found!");
@@ -276,6 +319,7 @@ void ContinuousMap::run()
             //disabling buttons to prevent evil user inputs
             start_planning_button -> setEnabled(false);
             undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
             //enabling only selected buttons
             show_path_button -> setEnabled(true);
             show_all_button -> setEnabled(true);
@@ -286,10 +330,9 @@ void ContinuousMap::run()
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-            drawEdges();
             drawNodes();
-            drawPath();
-
+            drawEdges();
+            map_window_.display();
             //showCurrentState();
         }
 
@@ -300,6 +343,7 @@ void ContinuousMap::run()
             //disabling buttons to prevent evil user inputs
             start_planning_button -> setEnabled(false);
             undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
             show_path_button -> setEnabled(false);
             //enabling only selected buttons
             show_all_button -> setEnabled(true);
@@ -309,8 +353,9 @@ void ContinuousMap::run()
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-            drawPath();
-
+            drawNodes();
+            drawEdges();
+            map_window_.display();
             //showCurrentState();
         }
 
@@ -321,6 +366,7 @@ void ContinuousMap::run()
             //disabling buttons to prevent evil user inputs
             start_planning_button -> setEnabled(false);
             undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
             show_all_button -> setEnabled(false);
             //enabling only selected buttons
             show_path_button -> setEnabled(true);
@@ -331,10 +377,9 @@ void ContinuousMap::run()
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-            drawEdges();
             drawNodes();
-            drawPath();
-
+            drawEdges();
+            map_window_.display();
             //showCurrentState();
         }
 
@@ -346,12 +391,12 @@ void ContinuousMap::run()
             map_window_.clear();
             drawControlPane();
             drawObstacles();
-
-            //showCurrentState();
-            //do stuff here to release resources
+            sf::sleep(sf::seconds(1));
+            map_window_.display();
+            break;
         }
-        map_window_.display();
     }
+    
 }
 
 void ContinuousMap::drawPoint(const sf::Vector2f &pt,double radius,const sf::Color &color)
@@ -413,17 +458,23 @@ void ContinuousMap::drawObstacles()
     }
 }
 
-void ContinuousMap::drawEdges()
-{
-
-}
-
 void ContinuousMap::drawNodes()
 {
-
+    for (auto &node : continuous_planner_->returnTree())
+    {
+        if (node.idx() == 0){continue;}
+        if (node.idx() == continuous_planner_->returnTreeSize()-1){continue;}
+        drawPoint(node, point_radius_ , POINT_COLOR);
+    }
 }
 
-void ContinuousMap::drawPath()
+void ContinuousMap::drawEdges()
 {
-
+    std::vector<Vec2D> tree_copy = continuous_planner_->returnTree();
+    std::vector<Vec2D> parent_copy = continuous_planner_->returnParent();
+    unsigned long int current_tree_size = continuous_planner_->returnTreeSize();
+    for (unsigned long int i=1 ; i<current_tree_size ; ++i)
+    {
+        drawLine(tree_copy[i],parent_copy[i],LINE_COLOR);
+    }
 }

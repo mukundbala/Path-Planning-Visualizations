@@ -16,8 +16,7 @@ if (!isDataOk)
     std::cout<<"Exiting App\n";
     return 0;
 }
-
-ContinuousMap map(data);
-map.run();
-
+std::shared_ptr<ContinuousMap> continuous_map = std::make_shared<ContinuousMap>(data);
+continuous_map->run();
+return 0;
 }

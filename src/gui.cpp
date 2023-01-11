@@ -768,7 +768,6 @@ bool PlannerGUI::DataTest()
     if (app_data_->getChosenMap() == "continuous")
     {
         std::string planner = app_data_->getChosenPlanner();
-        std::cout<<planner<<"\n";
         bool check = false;
         for (const auto& a:app_data_->continuous_planners)
         {

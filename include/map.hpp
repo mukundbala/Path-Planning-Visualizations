@@ -4,6 +4,8 @@
 #include <point.hpp>
 #include <obstacles.hpp>
 #include <data.hpp>
+#include <continuous_planner.hpp>
+#include <RRT.hpp>
 #include <TGUI/TGUI.hpp>
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -18,8 +20,9 @@ Map classes should only handle display related tasks
 enum class MapState:unsigned short
 {
     NotStarted,
-    PrepComplete,
     UndoSelections,
+    ConfirmPoints,
+    PrepComplete,
     StartPlanner,
     PlanningComplete,
     ShowPath,
@@ -64,6 +67,7 @@ tgui::Button::Ptr start_planning_button;
 tgui::Button::Ptr show_path_button;
 tgui::Button::Ptr show_all_button;
 tgui::Button::Ptr quit_button;
+tgui::Button::Ptr confirm_points_button;
 sf::RectangleShape control_pane_background;
 
 sf::Color LINE_COLOR;
@@ -80,13 +84,15 @@ class ContinuousMap:public BaseMap
 {
 private:
 int num_circle_obs, num_rect_obs, num_total_obs;
-std::string chosen_continuous_planner;
+std::shared_ptr<ContinuousPlanner> continuous_planner_;
 Vec2D start_pt_;
 Vec2D end_pt_;
 double point_radius_;
 public:
     ContinuousMap(std::shared_ptr<AppData> my_data);
     ~ContinuousMap();
+    
+    void setPlanner();
     void run();
 
     void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
@@ -95,11 +101,9 @@ public:
     void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
     
     void drawStartEnd();
+    void drawObstacles();
     void drawNodes();
     void drawEdges();
-    void drawPath();
-    void drawObstacles();
-
 };
 
 class DiscreteMap:public BaseMap

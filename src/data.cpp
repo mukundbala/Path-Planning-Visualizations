@@ -26,7 +26,19 @@ AppData::AppData()
         std::cout<<"[AppData]: Invalid Resolution! Defaulting to (20,20)\n";
     }
 
+    start_pt_.setCoords(-1,-1);
+    start_pt_.idx(-1);
+    start_pt_.cost(-1);
+    end_pt_.setCoords(-1,-1);
+    end_pt_.cost(-1);
+    end_pt_.idx(-1);
+
     std::cout<<"[AppData]: List of planners loaded!\n";
+}
+
+AppData::~AppData()
+{
+    loader.~Node();
 }
 
 std::string AppData::getChosenMap()
@@ -74,6 +86,16 @@ double AppData::getEPS()const
     return this->EPS;
 }
 
+Vec2D AppData::getStartPoint()const
+{
+    return this->start_pt_;
+}
+
+Vec2D AppData::getEndPoint()const
+{
+    return this->end_pt_;
+}
+
 std::pair<int,int> AppData::getResolution()const
 {
     return this->resolution_;
@@ -87,4 +109,14 @@ void AppData::setChosenMap(std::string type)
 void AppData::setChosenPlanner(std::string type)
 {
     this->chosen_planner_ = type;
+}
+
+void AppData::setStart(Vec2D &start)
+{
+    this->start_pt_ = start;
+}
+
+void AppData::setEnd(Vec2D &end)
+{
+    this->end_pt_ = end;
 }

@@ -56,6 +56,8 @@ public:
    void operator ++();
    void operator --();
 
+   void operator *= (double scalar);
+
    double mag()const;
    double mag(Vec2D& other_point)const;
    double mag(sf::Vector2f& other_point)const;

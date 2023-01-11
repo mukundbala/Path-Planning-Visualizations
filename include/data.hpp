@@ -8,7 +8,7 @@ class AppData
 private:
     std::string chosen_map_type_; //the map type (discrete or continuous)
     std::string chosen_planner_; //the type of planner
-
+    
     int gui_window_x_;
     int gui_window_y_;
     int control_pane_width;
@@ -24,18 +24,32 @@ private:
     YAML::Node loader;
 public:
     AppData();
-    
+
+    ~AppData();
+
     std::string getChosenMap();
+
     std::string getChosenPlanner();
 
     int getGUIWindowX()const;
+
     int getGUIWindowY()const;
+
     int getControlPaneWidth()const;
+
     int getMapY()const;
+
     int getMapX()const;
+
     int getNumRandomObs()const;
+
     double getEPS()const;
+
     std::pair<int,int> getResolution()const;
+
+    Vec2D getStartPoint()const;
+
+    Vec2D getEndPoint()const;
 
     void setChosenMap(std::string type);
     

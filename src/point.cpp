@@ -145,6 +145,12 @@ void Vec2D::operator--()
     this->y_ -= 1;
 }
 
+void Vec2D::operator *= (double scalar)
+{
+    this->x_ *= scalar;
+    this->y_ *= scalar;
+}
+
 double Vec2D::mag()const
 {
     double magnitude_of_line=sqrt(pow(this->x_,2)+pow(this->y_,2));

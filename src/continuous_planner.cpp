@@ -1,16 +1,23 @@
 #include <continuous_planner.hpp>
 
-ContinuousPlanner::ContinuousPlanner(std::shared_ptr<AppData> data, Vec2D &start_pt, Vec2D &end_pt)
+ContinuousPlanner::ContinuousPlanner(std::shared_ptr<AppData> data)
 {
     data_ = data;
-    setStartPoint(start_pt);
-    setEndPoint(end_pt);
+    start_point_ = data_->getStartPoint();
+    end_point_ = data_->getEndPoint();
     planner_state_ = ContinuousPlannerState::NotStarted;
     chosen_planner_name_ = data_->getChosenPlanner();
-    control_pane_width = data->getControlPaneWidth();
+    control_pane_width_ = data->getControlPaneWidth();
     map_x_ = data_->getMapX();
     map_y_ = data_->getMapY();
     EPS_ = data_->getEPS();
+    std::cout<<"[ContinuousPlanner]: Base Planner Initialized!\n";
+}
+
+ContinuousPlanner::~ContinuousPlanner()
+{
+    data_.reset();
+    std::cout<<"[ContinuousPlanner]: Halting Base Planner\n";
 }
 
 void ContinuousPlanner::setStartPoint(Vec2D &start)
@@ -25,9 +32,13 @@ void ContinuousPlanner::setEndPoint(Vec2D &end)
     this->end_point_.setCoords(end.x(),end.y());
 }
 
-ContinuousPlanner::~ContinuousPlanner()
+void ContinuousPlanner::updateBasePlannerStartEnd()
 {
-    data_.reset();
+    this->start_point_.setCoords(data_->getStartPoint().x(),data_->getStartPoint().y());
+    this->start_point_.idx(0);
+    this->start_point_.cost(0);
+
+    this->end_point_.setCoords(data_->getEndPoint().x(),data_->getEndPoint().y());
 }
 
 bool ContinuousPlanner::pointInRectangle(Vec2D &pt)
@@ -161,4 +172,9 @@ bool ContinuousPlanner::doesLineCollideCircle(Vec2D &p1, Vec2D &p2)
         return true;
     }
     return false;
+}
+
+ContinuousPlannerState ContinuousPlanner::returnPlannerState()
+{
+    return planner_state_;
 }
