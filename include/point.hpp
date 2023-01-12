@@ -42,7 +42,10 @@ public:
    bool operator != (Vec2D& rhs);
 
    Vec2D operator + (Vec2D& rhs)const;
-   Vec2D operator - (Vec2D& rhs)const; 
+   Vec2D operator - (Vec2D& rhs)const;
+
+   Vec2D operator * (double scalar)const;
+   Vec2D operator / (double scalar)const;
    
    void operator += (Vec2D& rhs);
    void operator -= (Vec2D& rhs);

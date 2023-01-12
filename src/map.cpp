@@ -158,7 +158,7 @@ void ContinuousMap::run()
             {
                 //bool is_point_valid = true;
                 sf::Vector2f mouse_position(event.mouseButton.x,event.mouseButton.y);
-                if (event.mouseButton.button == sf::Mouse::Right && start_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
+                if (event.mouseButton.button == sf::Mouse::Left && start_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
                 {
                     //we ensure that the right button has not been clicked before, so trying to click it multiple times will not work
                     if (mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
@@ -168,7 +168,7 @@ void ContinuousMap::run()
                     clicks_++;
                 }
 
-                else if (event.mouseButton.button == sf::Mouse::Left && end_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
+                else if (event.mouseButton.button == sf::Mouse::Right && end_pt_.x()<0 && mouse_position.x >= control_pane_width_ && mouse_position.x < map_x_+control_pane_width_ && mouse_position.y>=0 && mouse_position.y<map_y_)
                 {
                     end_pt_.setCoords(mouse_position.x,mouse_position.y);
                     end_pt_.idx(0);
@@ -296,7 +296,7 @@ void ContinuousMap::run()
 
             continuous_planner_->plan();
             
-            if (continuous_planner_->returnPlannerState() == ContinuousPlannerState::PlanningComplete)
+            if (continuous_planner_->returnPlannerState(0) == ContinuousPlannerState::PathFound)
             {
                 program_state_ = MapState::PlanningComplete;
                 std::cout<<"[ContinuousMap]: Planning Complete\n";
@@ -309,6 +309,7 @@ void ContinuousMap::run()
             drawStartEnd();
             drawNodes();
             drawEdges();
+            drawPath(); //this will return if no path is found
             map_window_.display();
             //showCurrentState();
         }
@@ -325,6 +326,8 @@ void ContinuousMap::run()
             show_all_button -> setEnabled(true);
             quit_button -> setEnabled(true);
             
+            continuous_planner_->plan();
+
             //drawing our frame
             map_window_.clear();
             drawControlPane();
@@ -332,6 +335,7 @@ void ContinuousMap::run()
             drawStartEnd();
             drawNodes();
             drawEdges();
+            drawPath(); //this will return if no path is found
             map_window_.display();
             //showCurrentState();
         }
@@ -349,12 +353,14 @@ void ContinuousMap::run()
             show_all_button -> setEnabled(true);
             quit_button -> setEnabled(true);
             
+            continuous_planner_->plan();
+
             map_window_.clear();
             drawControlPane();
             drawObstacles();
             drawStartEnd();
-            drawNodes();
-            drawEdges();
+            drawPath(); //this will return if no path is found
+            // drawPath();
             map_window_.display();
             //showCurrentState();
         }
@@ -372,6 +378,8 @@ void ContinuousMap::run()
             show_path_button -> setEnabled(true);
             quit_button -> setEnabled(true);
 
+            continuous_planner_->plan();
+
             //drawing our frame
             map_window_.clear();
             drawControlPane();
@@ -379,6 +387,7 @@ void ContinuousMap::run()
             drawStartEnd();
             drawNodes();
             drawEdges();
+            drawPath();
             map_window_.display();
             //showCurrentState();
         }
@@ -476,5 +485,17 @@ void ContinuousMap::drawEdges()
     for (unsigned long int i=1 ; i<current_tree_size ; ++i)
     {
         drawLine(tree_copy[i],parent_copy[i],LINE_COLOR);
+    }
+}
+void ContinuousMap::drawPath()
+{
+    std::vector<Vec2D> path_copy = continuous_planner_->returnPath();
+    if (path_copy.empty())
+    {
+        return;
+    }
+    for (unsigned long int i = 0 ; i<path_copy.size()-1 ; ++i)
+    {
+        drawLine(path_copy[i],path_copy[i+1],PATH_COLOR);
     }
 }

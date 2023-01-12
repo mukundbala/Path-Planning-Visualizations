@@ -1,0 +1,333 @@
+Current Iteration: 1
+Tree Size: 2
+Parent Size: 2
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+################
+Current Iteration: 2
+Tree Size: 3
+Parent Size: 3
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+################
+Current Iteration: 3
+Tree Size: 4
+Parent Size: 4
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+################
+Current Iteration: 4
+Tree Size: 5
+Parent Size: 5
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+################
+Current Iteration: 5
+Tree Size: 6
+Parent Size: 6
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+################
+Current Iteration: 6
+Tree Size: 7
+Parent Size: 7
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+################
+Current Iteration: 7
+Tree Size: 8
+Parent Size: 8
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+################
+Current Iteration: 8
+Tree Size: 9
+Parent Size: 9
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+Coordinates:(733.778,333.994)
+Cost:-1
+Index:8
+################
+Current Iteration: 9
+Tree Size: 10
+Parent Size: 10
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+Coordinates:(733.778,333.994)
+Cost:-1
+Index:8
+Coordinates:(689.579,390)
+Cost:-1
+Index:9
+################
+Current Iteration: 10
+Tree Size: 11
+Parent Size: 11
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+Coordinates:(733.778,333.994)
+Cost:-1
+Index:8
+Coordinates:(689.579,390)
+Cost:-1
+Index:9
+Coordinates:(685.84,398)
+Cost:-1
+Index:10
+################
+Current Iteration: 11
+Tree Size: 12
+Parent Size: 12
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+Coordinates:(733.778,333.994)
+Cost:-1
+Index:8
+Coordinates:(689.579,390)
+Cost:-1
+Index:9
+Coordinates:(685.84,398)
+Cost:-1
+Index:10
+Coordinates:(681.746,406)
+Cost:-1
+Index:11
+################
+Current Iteration: 12
+Tree Size: 13
+Parent Size: 13
+Printing the entire tree!
+Coordinates:(726,326)
+Cost:0
+Index:0
+Coordinates:(719.959,334)
+Cost:-1
+Index:1
+Coordinates:(715.632,342)
+Cost:-1
+Index:2
+Coordinates:(710.506,350)
+Cost:-1
+Index:3
+Coordinates:(706.77,358)
+Cost:-1
+Index:4
+Coordinates:(700.893,366)
+Cost:-1
+Index:5
+Coordinates:(697.179,374)
+Cost:-1
+Index:6
+Coordinates:(692.72,382)
+Cost:-1
+Index:7
+Coordinates:(733.778,333.994)
+Cost:-1
+Index:8
+Coordinates:(689.579,390)
+Cost:-1
+Index:9
+Coordinates:(685.84,398)
+Cost:-1
+Index:10
+Coordinates:(681.746,406)
+Cost:-1
+Index:11
+Coordinates:(677.994,414)
+Cost:-1
+Index:12
+################
+Current Iteration: 13
+Tree Size: 14
+Parent Size: 14

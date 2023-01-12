@@ -104,6 +104,7 @@ public:
     void drawObstacles();
     void drawNodes();
     void drawEdges();
+    void drawPath();
 };
 
 class DiscreteMap:public BaseMap

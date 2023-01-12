@@ -5,6 +5,7 @@ ContinuousPlanner::ContinuousPlanner(std::shared_ptr<AppData> data)
     data_ = data;
     start_point_ = data_->getStartPoint();
     end_point_ = data_->getEndPoint();
+    planner_state_string ={"NotStarted","Planning", "PathFound", "PlanningComplete"};
     planner_state_ = ContinuousPlannerState::NotStarted;
     chosen_planner_name_ = data_->getChosenPlanner();
     control_pane_width_ = data->getControlPaneWidth();
@@ -119,19 +120,54 @@ bool ContinuousPlanner::doesLineCollideRectangle(Vec2D &p1, Vec2D &p2)
     return false;
 }
 
-bool ContinuousPlanner::pointInCircle(Vec2D &pt)
+bool ContinuousPlanner::doesLineCollideCircle(Vec2D &tree_node, Vec2D &stepped_point) //tree , stepped
 {
     if (data_->circle_obs_array.array.empty())
     {
-        return false;
+        return false; //no circles to collides
     }
-    for (const auto& circObs:data_->circle_obs_array.array)
+
+    for (auto &circle : data_->circle_obs_array.array)
     {
-        double origin_x = circObs.getOrigin().x;
-        double origin_y = circObs.getOrigin().y;
-        Vec2D origin(origin_x,origin_y);
-        double dist_to_origin = pt.mag(origin);
-        if (dist_to_origin <= (circObs.getRadius() + circObs.getTolerance() - EPS_))
+        sf::Vector2f circle_centre_V2f = circle.getPosition();
+        Vec2D circle_centre_V2D(circle_centre_V2f.x,circle_centre_V2f.y);
+        double adjusted_radius = circle.getAdjustedRadius();
+
+        double dist_to_centre_p1 = tree_node.mag(circle_centre_V2f) - EPS_;
+        double dist_to_centre_p2 = stepped_point.mag(circle_centre_V2f) - EPS_;
+
+        if (dist_to_centre_p1 <= adjusted_radius || dist_to_centre_p2 <= adjusted_radius)
+        {
+            return true; //either piercing or impaling collision. If this check passes, all other cases are NoCollision OR ThroughandThrough Collisions
+        }
+
+        Vec2D tree_to_centre = circle_centre_V2D - tree_node;
+        Vec2D tree_to_stepped = stepped_point - tree_node;
+        double projection_k = tree_node.dot(stepped_point) / tree_to_stepped.dot(tree_to_stepped);
+        Vec2D projected_point;
+        projected_point.x(tree_to_stepped.x() * projection_k);
+        projected_point.y(tree_to_stepped.y( )* projection_k);
+        Vec2D tree_to_projected = projected_point - tree_node;
+
+        double k = fabs(tree_to_stepped.x()) > fabs(tree_to_stepped.y()) ? tree_to_projected.x() / tree_to_stepped.x() : tree_to_projected.y() / tree_to_stepped.y();
+        
+        double dist = 0;
+        if (k <= 0.0)
+        {
+            dist = sqrt(tree_to_centre.dot(tree_to_centre));
+        }
+        else if (k >= 1.0)
+        {
+            Vec2D stepped_to_centre = circle_centre_V2D - stepped_point;
+            dist = sqrt(stepped_to_centre.dot(stepped_to_centre));
+        }
+        else
+        {
+            Vec2D projected_to_centre = circle_centre_V2D - projected_point;
+            dist = sqrt(projected_to_centre.dot(projected_to_centre));
+        }
+
+        if (dist <= adjusted_radius)
         {
             return true;
         }
@@ -139,42 +175,11 @@ bool ContinuousPlanner::pointInCircle(Vec2D &pt)
     return false;
 }
 
-bool ContinuousPlanner::lineIntersectCircle(Vec2D &p1,Vec2D &p2)
+ContinuousPlannerState ContinuousPlanner::returnPlannerState(bool verbose)
 {
-    if (data_->circle_obs_array.array.empty())
+    if (verbose)
     {
-        return false;
+        std::cout<<"[PlannerState]: "<<this->planner_state_string[static_cast<unsigned short>(this->planner_state_)];
     }
-
-    Vec2D line_segment_midpoint ((p1.x() + p2.x()) / 2,(p1.y() + p2.y()) / 2);
-    for (const auto& circObs:data_->circle_obs_array.array)
-    {
-        double origin_x = circObs.getOrigin().x;
-        double origin_y = circObs.getOrigin().y;
-        Vec2D origin(origin_x,origin_y);
-        double dist_to_origin = line_segment_midpoint.mag(origin);
-        if (dist_to_origin <= (circObs.getRadius() + circObs.getTolerance() - EPS_))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ContinuousPlanner::doesLineCollideCircle(Vec2D &p1, Vec2D &p2)
-{
-    if (pointInCircle(p2))
-    {
-        return true;
-    }
-    if (lineIntersectCircle(p2,p1))
-    {
-        return true;
-    }
-    return false;
-}
-
-ContinuousPlannerState ContinuousPlanner::returnPlannerState()
-{
     return planner_state_;
 }

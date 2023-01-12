@@ -1,4 +1,4 @@
- #ifndef RRT_HPP
+#ifndef RRT_HPP
 #define RRT_HPP
 #include <continuous_planner.hpp>
 #include <random>
@@ -13,6 +13,7 @@ private:
     int max_iterations_;
     int current_iteration;
     double tree_size_;
+    bool path_created_;
     std::vector<Vec2D> tree_;
     std::vector<Vec2D> parent_;
     std::vector<Vec2D> path_;
@@ -33,7 +34,7 @@ public:
     Vec2D getSteppedPoint(Vec2D &random_point, Vec2D &proximal_node);
     bool pointAlreadyChosen(Vec2D &pt);
     bool checkSteppedPoint(Vec2D &stepped_point, Vec2D& proximal_node);
-    void recordNewNode(Vec2D &stepped_point, Vec2D& proximal_node);
+    void recordNewNode(Vec2D &point_to_add, Vec2D& tree_node);
     bool goalReached(Vec2D &child_node);
     void generatePath();
 };

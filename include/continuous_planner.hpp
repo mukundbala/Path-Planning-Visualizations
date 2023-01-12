@@ -2,7 +2,7 @@
 #define CONTINUOUS_PLANNER_HPP
 #include <point.hpp>
 #include <data.hpp>
-enum class ContinuousPlannerState
+enum class ContinuousPlannerState:unsigned short
 {
     NotStarted,
     Planning,
@@ -18,6 +18,7 @@ std::shared_ptr<AppData> data_; //containing data on obstacles, map and the chos
 Vec2D start_point_;
 Vec2D end_point_;
 ContinuousPlannerState planner_state_;
+std::vector<std::string> planner_state_string;
 std::string chosen_planner_name_;
 double control_pane_width_;
 double map_x_;
@@ -46,11 +47,9 @@ bool lineIntersectRectangle(Vec2D &p2, Vec2D &p1);
 bool doesLineCollideRectangle(Vec2D &p1, Vec2D &p2);
 
 //tools to detect collision between line formed by any 2 points and circles
-bool pointInCircle(Vec2D &pt);
-bool lineIntersectCircle(Vec2D &p1, Vec2D &p2);
-bool doesLineCollideCircle(Vec2D &p1, Vec2D &p2);
+bool doesLineCollideCircle(Vec2D &tree_node, Vec2D &stepped_point);
 
-ContinuousPlannerState returnPlannerState();
+ContinuousPlannerState returnPlannerState(bool verbose);
 Vec2D getStartPoint()
 {
     return start_point_;

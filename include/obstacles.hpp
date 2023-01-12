@@ -57,6 +57,8 @@ private:
     
     double closeness_tolerance;
 
+    double adjusted_radius;
+
     sf::Color obstacle_color=sf::Color::Red;
     
     std::string obstacle_type;
@@ -76,6 +78,8 @@ public:
     double getRadius()const;
 
     double getTolerance()const;
+
+    double getAdjustedRadius()const;
 
     std::string getType()const;
 

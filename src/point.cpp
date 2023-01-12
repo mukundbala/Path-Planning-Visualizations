@@ -121,6 +121,23 @@ Vec2D Vec2D::operator -(double scalar)const
     return vec;
 }
 
+Vec2D Vec2D::operator * (double scalar) const
+{
+    Vec2D multiplied;;
+    multiplied.x(this->x_*scalar);
+    multiplied.y(this->y_*scalar);
+    return multiplied;
+}
+
+Vec2D Vec2D::operator / (double scalar) const
+{
+    Vec2D divided;
+    assert(scalar!=0);
+    divided.x(this->x_/scalar);
+    divided.y(this->y_/scalar);
+    return divided;
+}
+
 void Vec2D::operator+=(double scalar)
 {
     this->x_ += scalar;

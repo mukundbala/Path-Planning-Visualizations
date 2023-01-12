@@ -1,7 +1,7 @@
 
 map_width: 900
 
-num_random_obstacles: 400
+num_random_obstacles: 200
 continuous_planner:  
   - RRT
   - RRT*

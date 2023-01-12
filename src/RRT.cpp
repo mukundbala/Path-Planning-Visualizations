@@ -12,6 +12,7 @@ RRT::RRT(std::shared_ptr<AppData> data):ContinuousPlanner(data)
     max_iterations_ = loader["iterations"].as<int>();
     current_iteration = 1;
     tree_size_ = 0;
+    path_created_ = 0;
     tree_.reserve(100);
     parent_.reserve(100);
     path_.reserve(100);
@@ -21,6 +22,9 @@ RRT::RRT(std::shared_ptr<AppData> data):ContinuousPlanner(data)
 RRT::~RRT()
 {
     loader.~Node();
+    tree_.clear();
+    path_.clear();
+    parent_.clear();
     std::cout<<"[RRT]: Halting RRT planner\n";
 }
 
@@ -31,6 +35,12 @@ std::string RRT::getName()
 
 void RRT::plan()
 {
+    //sf::sleep(sf::seconds(5));
+    if (current_iteration == 1)
+    {
+        std::cout<<"Start Point: \n"; start_point_.print();
+        std::cout<<"End PointL \n"; end_point_.print();
+    }
     if (planner_state_ == ContinuousPlannerState::NotStarted)
     {
         return; //safeguard
@@ -38,7 +48,12 @@ void RRT::plan()
 
     else if (planner_state_ == ContinuousPlannerState::Planning)
     {
-        std::cout<<"Current Iteration: "<<current_iteration<<"\n";
+        std::cout<<"#########Current Iteration: "<<current_iteration<<"#########\n";
+        if (current_iteration > max_iterations_)
+        {
+            planner_state_ = ContinuousPlannerState::PlanningComplete;
+            return;
+        }
         Vec2D random_point = chooseRandomPoint(); //ok
         Vec2D proximal_node = getProximalNode(random_point);
         bool is_proximal_node_ok = checkProximalNode(proximal_node,random_point);
@@ -46,6 +61,7 @@ void RRT::plan()
         {
             current_iteration++;
             std::cout<<"[RRT]: Proximal Node failed\n";
+            std::cout<<"#########End Iteration: "<<current_iteration<<"#########\n";
             return; //point fails
         }
         Vec2D stepped_point = getSteppedPoint(random_point,proximal_node);
@@ -54,34 +70,27 @@ void RRT::plan()
         {
             current_iteration++;
             std::cout<<"[RRT]: Stepped Point failed\n";
+            std::cout<<"#########End Iteration: "<<current_iteration<<"#########\n";
             return;
         }
         recordNewNode(stepped_point,proximal_node);
+        bool has_goal_been_reached = goalReached(stepped_point);
+        if (has_goal_been_reached)
+        {
+            recordNewNode(end_point_ , stepped_point);
+            this->planner_state_ = ContinuousPlannerState::PathFound;
+            generatePath();
+            this->path_created_ = true;
+        }
         current_iteration ++;
-        std::cout<<"Max Iterations:"<<max_iterations_<<"\n";
-        std::cout<<"Current Iteration:"<<current_iteration<<"\n";
-        if (planner_state_ == ContinuousPlannerState::PlanningComplete)
-        {
-            std::cout<<"Max iteration Reached\n";
-        }
-        assert(tree_size_ == tree_.size());
-        if (current_iteration == max_iterations_)
-        {
-            ContinuousPlannerState::PlanningComplete;
-        }
-        return;
-    }
-
-    else if (planner_state_ == ContinuousPlannerState::PathFound)
-    {
-        std::cout<<"[RRT]:running goalReached okay\n";
-        generatePath();
-        std::cout<<"[RRT]: goalReached okay\n";
-        return;
     }
 
     else if (planner_state_ == ContinuousPlannerState::PlanningComplete)
     {
+        if (!path_created_)
+        {
+            std::cout<<"[RRT]: Goal has not been reached!\n";
+        }
         return; //planning is complete
     }
 
@@ -154,40 +163,46 @@ bool RRT::checkSteppedPoint(Vec2D &stepped_point, Vec2D& proximal_node)
     bool already_chosen_point = pointAlreadyChosen(stepped_point);
     if (already_chosen_point)
     {
+        std::cout<<"[RRT]: Stepped Point already chosen\n";
         return false;
     }
     bool collides_with_rectangle_obstacles = doesLineCollideRectangle(proximal_node,stepped_point);
     if (collides_with_rectangle_obstacles)
     {
+        std::cout<<"[RRT]: Stepped Point collides with rectangle\n";
+        stepped_point.print();
         return false;
     }
     bool collides_with_circle_obstacles = doesLineCollideCircle(proximal_node,stepped_point);
     if (collides_with_circle_obstacles)
     {
+        std::cout<<"[RRT]: Stepped Point collides with circle\n";
         return false;
     }
     return true;
 }
 
-void RRT::recordNewNode(Vec2D &stepped_point, Vec2D& proximal_node)
+void RRT::recordNewNode(Vec2D &point_to_add, Vec2D& tree_node)
 {
-    stepped_point.idx(tree_size_);
-    tree_.emplace_back(stepped_point);
-    parent_.emplace_back(proximal_node);
+    if (point_to_add == end_point_)
+    {
+        std::cout<<"[RRT]: Adding end point now. Path has been found\n";
+    }
+    point_to_add.idx(tree_size_);
+    tree_.emplace_back(point_to_add);
+    parent_.emplace_back(tree_node);
     tree_size_++;
 }
 
 bool RRT::goalReached(Vec2D &child_node)
 {
-    double dist_to_goal=child_node.mag(end_point_);
-    if (fabs(dist_to_goal-EPS_)<=goal_radius_){
-        end_point_.idx(tree_size_);
-        tree_.emplace_back(end_point_);
-        parent_.emplace_back(child_node);
-        tree_size_++;
-        return true;
+    double dist_to_goal=child_node.mag(this->end_point_);
+    bool within_goal_radius = fabs(dist_to_goal-EPS_) <= goal_radius_;
+    if (within_goal_radius)
+    {
+        std::cout<<"[RRT]: Goal Reached!\n";
     }
-    return false;
+    return within_goal_radius;
 }
 
 void RRT::generatePath()
@@ -207,14 +222,14 @@ std::vector<Vec2D> RRT::returnTree()
     return this->tree_;
 }
 
-std::vector<Vec2D> RRT::returnPath()
-{
-    return path_;
-}
-
 std::vector<Vec2D> RRT::returnParent()
 {
     return parent_;
+}
+
+std::vector<Vec2D> RRT::returnPath()
+{
+    return path_;
 }
 
 int RRT::returnTreeSize()

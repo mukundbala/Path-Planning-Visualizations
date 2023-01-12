@@ -21,17 +21,17 @@ RectangleObstacle::RectangleObstacle(sf::Vector2f size_input,sf::Vector2f positi
         0 . . . 3  +
     */
     //actual corners
-    Vec2D corner_0 (position.x - size.x / 2,position.y + size.y / 2);
-    Vec2D corner_1 (position.x - size.x / 2,position.y - size.y / 2);
-    Vec2D corner_2 (position.x + size.x / 2,position.y - size.y / 2);
-    Vec2D corner_3 (position.x + size.x / 2,position.y +size.y / 2);
+    Vec2D corner_0 (position.x - (size.x / 2) , position.y + (size.y / 2));
+    Vec2D corner_1 (position.x - (size.x / 2) , position.y - (size.y / 2));
+    Vec2D corner_2 (position.x + (size.x / 2) , position.y - (size.y / 2));
+    Vec2D corner_3 (position.x + (size.x / 2) , position.y + (size.y / 2));
     corners = {corner_0,corner_1,corner_2,corner_3};
 
     //adjust_corners
-    Vec2D adj_corner_0 (position.x - size.x / 2 - closeness_tolerance,position.y + size.y / 2 + closeness_tolerance);
-    Vec2D adj_corner_1 (position.x - size.x / 2 - closeness_tolerance,position.y - size.y / 2 - closeness_tolerance);
-    Vec2D adj_corner_2 (position.x + size.x / 2 + closeness_tolerance,position.y - size.y / 2 - closeness_tolerance);
-    Vec2D adj_corner_3 (position.x + size.x / 2 + closeness_tolerance,position.y + size.y / 2 + closeness_tolerance);
+    Vec2D adj_corner_0 (corners[0].x() - closeness_tolerance , corners[0].y() + closeness_tolerance);
+    Vec2D adj_corner_1 (corners[1].x() - closeness_tolerance , corners[1].y() - closeness_tolerance);
+    Vec2D adj_corner_2 (corners[2].x() + closeness_tolerance , corners[2].y() - closeness_tolerance);
+    Vec2D adj_corner_3 (corners[3].x() + closeness_tolerance , corners[3].y() + closeness_tolerance);
     toleranced_corners = {adj_corner_0,adj_corner_1,adj_corner_2,adj_corner_3};
 
     obstacle_type="rectangle";
@@ -113,6 +113,8 @@ CircleObstacle::CircleObstacle(double radius_input,sf::Vector2f position_input):
     obstacle_type = "circle";
 
     closeness_tolerance = 3.0;
+
+    adjusted_radius = radius + (closeness_tolerance);
 }
 
 CircleObstacle::CircleObstacle(double radius_input,Vec2D position_input):radius(radius_input)
@@ -130,6 +132,8 @@ CircleObstacle::CircleObstacle(double radius_input,Vec2D position_input):radius(
     obstacle_type = "circle";
 
     closeness_tolerance = 3.0;
+
+    adjusted_radius = radius + (closeness_tolerance);
 }
 
 sf::Vector2f CircleObstacle::getOrigin()const
@@ -150,6 +154,11 @@ double CircleObstacle::getRadius()const
 double CircleObstacle::getTolerance()const
 {
     return this->closeness_tolerance;
+}
+
+double CircleObstacle::getAdjustedRadius()const
+{
+    return this->adjusted_radius;
 }
 
 std::string CircleObstacle::getType()const
