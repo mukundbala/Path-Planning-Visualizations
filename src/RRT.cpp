@@ -9,7 +9,7 @@ RRT::RRT(std::shared_ptr<AppData> data):ContinuousPlanner(data)
     step_ = loader["step"].as<double>();
     bias_ = loader["bias"].as<double>();
     goal_radius_ = loader["goal_radius"].as<double>();
-    max_iterations_ = loader["iterations"].as<int>();
+    max_iterations_ = loader["max_iterations"].as<int>();
     current_iteration = 1;
     tree_size_ = 0;
     path_created_ = 0;
@@ -65,7 +65,7 @@ void RRT::plan()
             return; //point fails
         }
         Vec2D stepped_point = getSteppedPoint(random_point,proximal_node);
-        bool is_stepped_point_ok = checkSteppedPoint(stepped_point,random_point);
+        bool is_stepped_point_ok = checkSteppedPoint(stepped_point,proximal_node);
         if (!is_stepped_point_ok)
         {
             current_iteration++;
@@ -103,14 +103,15 @@ Vec2D RRT::chooseRandomPoint()
     if (rand_num<=limit){
         return end_point_; //return the nedpoint as the randomly selected point
     }
+    double buffer = 5.0;
     std::random_device rdx;
     std::random_device rdy;
 
     std::default_random_engine engx(rdx());
     std::default_random_engine engy(rdy());
     
-    std::uniform_real_distribution<double> distrx(control_pane_width_,map_x_+control_pane_width_);
-    std::uniform_real_distribution<double> distry(0,map_y_);
+    std::uniform_real_distribution<double> distrx(control_pane_width_ + buffer,map_x_ + control_pane_width_ - buffer);
+    std::uniform_real_distribution<double> distry(0 + buffer,map_y_ - buffer);
 
     double randx=distrx(engx);
     double randy=distry(engy);
@@ -140,6 +141,10 @@ bool RRT::checkProximalNode(Vec2D &proximal_node, Vec2D& random_point){
 
 Vec2D RRT::getSteppedPoint(Vec2D &random_point, Vec2D&proximal_node){
     Vec2D distvec=random_point-proximal_node; //vector pointing from proximal node to random point
+    if (distvec.mag() < step_)
+    {
+        return random_point;
+    }
     distvec.normalize();
     distvec*=step_; //step direction vector
     Vec2D stepped_point=proximal_node+distvec; //computing the point where the stepped point lies
