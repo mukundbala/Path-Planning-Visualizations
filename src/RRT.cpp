@@ -109,7 +109,7 @@ Vec2D RRT::chooseRandomPoint()
     std::default_random_engine engx(rdx());
     std::default_random_engine engy(rdy());
     
-    std::uniform_real_distribution<double> distrx(control_pane_width_,map_x_);
+    std::uniform_real_distribution<double> distrx(control_pane_width_,map_x_+control_pane_width_);
     std::uniform_real_distribution<double> distry(0,map_y_);
 
     double randx=distrx(engx);
