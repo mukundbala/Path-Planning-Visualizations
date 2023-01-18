@@ -6,6 +6,7 @@
 #include <data.hpp>
 #include <continuous_planner.hpp>
 #include <RRT.hpp>
+#include <RRTStar.hpp>
 #include <TGUI/TGUI.hpp>
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -92,7 +93,6 @@ public:
     ContinuousMap(std::shared_ptr<AppData> my_data);
     ~ContinuousMap();
     
-    void setPlanner();
     void run();
 
     void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);

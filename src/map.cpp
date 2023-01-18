@@ -129,8 +129,14 @@ ContinuousMap::ContinuousMap(std::shared_ptr<AppData> my_data):BaseMap(my_data)
     point_radius_ = 3.0;
     if (planner_name_ == "RRT")
     {
-        std::cout<<"Initial planner creation done!\n";
         continuous_planner_ = std::make_shared<RRT>(data_);
+        std::cout<<"RRT planner Initialized!\n";
+    }
+
+    else if (planner_name_ == "RRTStar")
+    {
+        continuous_planner_ = std::make_shared<RRTStar>(data_);
+        std::cout<<"RRT planner Initialized!\n";
     }
     std::cout<<"[ContinuousMap]:Continuous Map Built!\n";
 }

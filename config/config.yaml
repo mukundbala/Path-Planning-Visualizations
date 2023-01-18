@@ -1,10 +1,10 @@
 
-map_width: 900
+map_width: 1200
 
-num_random_obstacles: 200
+num_random_obstacles: 350
 continuous_planner:  
   - RRT
-  - RRT*
+  - RRTStar
   - RRTMarch
 
 discrete_planner:

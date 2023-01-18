@@ -1,0 +1,7 @@
+planner_name: RRTStar
+step: 15.0
+bias: 0.05
+rewire_radius: 25.0
+rewire_threshold: 10.0
+goal_radius: 15.0
+max_iterations: 100000
