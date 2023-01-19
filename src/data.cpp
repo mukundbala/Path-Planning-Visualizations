@@ -12,8 +12,8 @@ AppData::AppData()
     continuous_planners = loader["continuous_planner"].as<std::vector<std::string>>();
     discrete_planners = loader["discrete_planner"].as<std::vector<std::string>>();
     resolution_ = std::make_pair(loader["resolution"].as<std::vector<int>>()[0],loader["resolution"].as<std::vector<int>>()[1]);
-    num_random_obstacles = loader["num_random_obstacles"].as<int>();
-    EPS = 1e-6; //load this from the yaml file!
+    num_random_obstacles_ = loader["num_random_obstacles"].as<int>();
+    EPS_ = 1e-6; //load this from the yaml file!
     if (resolution_.first != resolution_.second)
     {
         resolution_ = std::make_pair(20,20);
@@ -78,12 +78,12 @@ int AppData::getMapY()const
 
 int AppData::getNumRandomObs()const
 {
-    return this->num_random_obstacles;
+    return this->num_random_obstacles_;
 }
 
 double AppData::getEPS()const
 {
-    return this->EPS;
+    return this->EPS_;
 }
 
 Vec2D AppData::getStartPoint()const
