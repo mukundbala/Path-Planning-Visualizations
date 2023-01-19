@@ -35,11 +35,12 @@ std::string RRT::getName()
 
 void RRT::plan()
 {
-    //sf::sleep(sf::seconds(5));
+    //sf::sleep(sf::seconds(3)); //for debugging 
+
     if (current_iteration == 1)
     {
         std::cout<<"Start Point: \n"; start_point_.print();
-        std::cout<<"End PointL \n"; end_point_.print();
+        std::cout<<"End Point: \n"; end_point_.print();
     }
     if (planner_state_ == ContinuousPlannerState::NotStarted)
     {
@@ -54,14 +55,13 @@ void RRT::plan()
             planner_state_ = ContinuousPlannerState::PlanningComplete;
             return;
         }
-        Vec2D random_point = chooseRandomPoint(); //ok
+        Vec2D random_point = chooseRandomPoint(); 
         Vec2D proximal_node = getProximalNode(random_point);
         bool is_proximal_node_ok = checkProximalNode(proximal_node,random_point);
         if (!is_proximal_node_ok)
         {
             current_iteration++;
             std::cout<<"[RRT]: Proximal Node failed\n";
-            std::cout<<"#########End Iteration: "<<current_iteration<<"#########\n";
             return; //point fails
         }
         Vec2D stepped_point = getSteppedPoint(random_point,proximal_node);
@@ -70,7 +70,6 @@ void RRT::plan()
         {
             current_iteration++;
             std::cout<<"[RRT]: Stepped Point failed\n";
-            std::cout<<"#########End Iteration: "<<current_iteration<<"#########\n";
             return;
         }
         recordNewNode(stepped_point,proximal_node);
@@ -101,7 +100,7 @@ Vec2D RRT::chooseRandomPoint()
     int rand_num=1 + (rand() % 100);
     int limit=100*bias_;
     if (rand_num<=limit){
-        return end_point_; //return the nedpoint as the randomly selected point
+        return end_point_; //return the endpoint as the randomly selected point
     }
     double buffer = 5.0;
     std::random_device rdx;

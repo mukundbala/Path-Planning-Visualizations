@@ -15,7 +15,7 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     background_color_ = sf::Color::Red;
     dark_theme_.setDefault("themes/Black.txt");
     
-    gui_state_ = GuiState::HomeScreen;
+    chooser_state_ = ChooserState::HomeScreen;
     default_circobs_radius_ = 10;
     default_rectobs_size_ = {(float)default_circobs_radius_*2,(float)default_circobs_radius_*2};
     run_state_ = true;
@@ -31,14 +31,14 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     go_button->setSize(150,120);
     go_button->setText("GO!");
     go_button->setTextSize(0);
-    go_button->onMousePress([&]{gui_state_ = GuiState::ChooseMapType;});
+    go_button->onMousePress([&]{chooser_state_ = ChooserState::ChooseMapType;});
 
     exit_button = tgui::Button::create();
     exit_button->setPosition(700,500);
     exit_button->setSize(80,80);
     exit_button->setText("Exit");
     exit_button->setTextSize(0);
-    exit_button->onMousePress([&]{gui_state_ = GuiState::Quit;});
+    exit_button->onMousePress([&]{chooser_state_ = ChooserState::Quit;});
     
     canvas = tgui::Canvas::create({200, 200});
     img_texture.loadFromFile("themes/homescreen.png");
@@ -57,7 +57,7 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     continuous_map_button->setText("Continuous\n      Map");
     continuous_map_button->setTextSize(0);
     continuous_map_button->onMousePress([&]{
-                                            gui_state_ = GuiState::ContinuousMapSelector;
+                                            chooser_state_ = ChooserState::ContinuousMapSelector;
                                             app_data_->setChosenMap("continuous");});
     
     discrete_map_button = tgui::Button::create();
@@ -66,7 +66,7 @@ PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
     discrete_map_button->setText("Discrete\n    Map");
     discrete_map_button->setTextSize(28);
     discrete_map_button->onMousePress([&]{
-                                            gui_state_ = GuiState::DiscreteMapSelector;
+                                            chooser_state_ = ChooserState::DiscreteMapSelector;
                                             app_data_->setChosenMap("discrete");});
     
     continuous_planners_label = tgui::Label::create();
@@ -127,7 +127,7 @@ PlannerGUI::~PlannerGUI() noexcept
 void PlannerGUI::runGui()
 {
     runMapAndPlannerChooser();
-    if (gui_state_ == GuiState::Quit)
+    if (chooser_state_ == ChooserState::Quit)
     {
         return;
     }
@@ -185,7 +185,7 @@ void PlannerGUI::ChoosePlannerCallback(std::string planner_name)
 {
     app_data_->setChosenPlanner(planner_name);
     std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
-    gui_state_ = GuiState::Done;
+    chooser_state_ = ChooserState::Done;
 }
 
 void PlannerGUI::runMapAndPlannerChooser()
@@ -205,23 +205,23 @@ void PlannerGUI::runMapAndPlannerChooser()
             }
         }
         //gui_window_.clear(sf::Color::Red);
-        if (gui_state_ == GuiState::HomeScreen)
+        if (chooser_state_ == ChooserState::HomeScreen)
         {
             DrawHomeScreen();
         }
-        else if (gui_state_ == GuiState::ChooseMapType)
+        else if (chooser_state_ == ChooserState::ChooseMapType)
         {
             DrawMapTypeScreen();
         }
-        else if (gui_state_ == GuiState::ContinuousMapSelector)
+        else if (chooser_state_ == ChooserState::ContinuousMapSelector)
         {
             DrawContinuousMapSelection();
         }
-        else if (gui_state_ == GuiState::DiscreteMapSelector)
+        else if (chooser_state_ == ChooserState::DiscreteMapSelector)
         {
             DrawDiscreteMapSelection();
         }
-        else if (gui_state_ == GuiState::Quit || gui_state_ == GuiState::Done)
+        else if (chooser_state_ == ChooserState::Quit || chooser_state_ == ChooserState::Done)
         {
             std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
             gui_window_chooser_.close();
@@ -428,9 +428,7 @@ void PlannerGUI::runObstacleSelector()
         done_button->setPosition(20,700);
         done_button->setText("Done");
         done_button->setTextSize(15);
-        done_button->onMousePress([&]{if(state == Actions::NotStarted)
-                                                {return;}
-                                                state=Actions::Done;});
+        done_button->onMousePress([&]{state=Actions::Done;});
         gui_backend_selector_.add(done_button);
 
         if (state ==  Actions::Done)
@@ -823,15 +821,7 @@ bool PlannerGUI::DataTest()
     int total_obstacles = num_circ_obs + num_rect_obs;
     if (total_obstacles == 0)
     {
-        std::cout<<"[DataCheck]: No obstacles have been created. Are you sure you want an empty map?Y/N\n";
-        std::string ans;
-        std::cin>>ans;
-        if (ans == "N" || ans == "n")
-        {
-            pass = false;
-            std::cout<<"[DataCheck]: Please restart planner gui, and remember to add obstacles!\n";
-            return pass;
-        }
+        std::cout<<"[DataCheck]: No obstacles have been created.\n";
     }
     else
     {

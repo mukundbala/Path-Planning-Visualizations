@@ -11,7 +11,7 @@
 #include <obstacles.hpp>
 #include <data.hpp>
 #include <yaml-cpp/yaml.h>
-enum class GuiState:unsigned short
+enum class ChooserState:unsigned short
 {
     HomeScreen,
     ChooseMapType,
@@ -38,7 +38,7 @@ private:
     tgui::Theme dark_theme_;
     tgui::Theme blue_theme_;
     //GUIStates
-    GuiState gui_state_;
+    ChooserState chooser_state_;
     std::shared_ptr<AppData> app_data_;
     sf::Vector2f default_rectobs_size_; //used for generating obstacles in random mode
     double default_circobs_radius_; //used for generating obstacles in random mode

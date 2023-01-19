@@ -308,8 +308,6 @@ void ContinuousMap::run()
                 std::cout<<"[ContinuousMap]: Planning Complete\n";
             }
             map_window_.clear();
-            std::cout<<"################\n";
-            map_window_.clear();
             drawControlPane();
             drawObstacles();
             drawStartEnd();
