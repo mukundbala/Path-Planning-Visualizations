@@ -2,21 +2,110 @@
 
 PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
 {   
-    app_data_ = data;
+    app_data_ = data; //accessing data app data
+    
+    //setting all necessary app data
     gui_window_chooser_size_.x = app_data_->getGUIWindowX();
     gui_window_chooser_size_.y = app_data_->getGUIWindowY();
     gui_window_selector_size_.x = app_data_->getControlPaneWidth() + app_data_->getMapX();
     gui_window_selector_size_.y = app_data_->getMapY();
-    gui_window_chooser_.create(sf::VideoMode(gui_window_chooser_size_.x,gui_window_chooser_size_.y,32),"Planner GUI");
-    gui_backend_chooser_.setTarget(gui_window_chooser_);
+    resolution_ = app_data_->getResolution();
+    EPS=app_data_->getEPS();
+    
     background_color_ = sf::Color::Red;
     dark_theme_.setDefault("themes/Black.txt");
-    screen_num = 0;
+    
+    gui_state_ = GuiState::HomeScreen;
     default_circobs_radius_ = 10;
     default_rectobs_size_ = {(float)default_circobs_radius_*2,(float)default_circobs_radius_*2};
-    EPS=app_data_->getEPS();
-    resolution_ = app_data_->getResolution();
     run_state_ = true;
+
+    //creating the Buttons and Labels
+    label_title = tgui::Label::create();
+    label_title->setText("Path Planning Visualizations");
+    label_title->setTextSize(50);
+    label_title->setPosition(50,100);
+
+    go_button = tgui::Button::create();
+    go_button->setPosition(350,460);
+    go_button->setSize(150,120);
+    go_button->setText("GO!");
+    go_button->setTextSize(0);
+    go_button->onMousePress([&]{gui_state_ = GuiState::ChooseMapType;});
+
+    exit_button = tgui::Button::create();
+    exit_button->setPosition(700,500);
+    exit_button->setSize(80,80);
+    exit_button->setText("Exit");
+    exit_button->setTextSize(0);
+    exit_button->onMousePress([&]{gui_state_ = GuiState::Quit;});
+    
+    canvas = tgui::Canvas::create({200, 200});
+    img_texture.loadFromFile("themes/homescreen.png");
+    img_sprite.setTexture(img_texture);
+    img_sprite.setScale(200.f / img_texture.getSize().x, 200.f / img_texture.getSize().y);
+    canvas->setPosition(320, 200);
+
+    label_description = tgui::Label::create();
+    label_description->setText("Choose a Map Type!");
+    label_description->setTextSize(50);
+    label_description->setPosition(150,100);
+
+    continuous_map_button = tgui::Button::create();
+    continuous_map_button->setPosition(160,300);
+    continuous_map_button->setSize(180,120);
+    continuous_map_button->setText("Continuous\n      Map");
+    continuous_map_button->setTextSize(0);
+    continuous_map_button->onMousePress([&]{
+                                            gui_state_ = GuiState::ContinuousMapSelector;
+                                            app_data_->setChosenMap("continuous");});
+    
+    discrete_map_button = tgui::Button::create();
+    discrete_map_button->setPosition(480,300);
+    discrete_map_button->setSize(180,120);
+    discrete_map_button->setText("Discrete\n    Map");
+    discrete_map_button->setTextSize(28);
+    discrete_map_button->onMousePress([&]{
+                                            gui_state_ = GuiState::DiscreteMapSelector;
+                                            app_data_->setChosenMap("discrete");});
+    
+    continuous_planners_label = tgui::Label::create();
+    continuous_planners_label->setPosition(140,50);
+    continuous_planners_label->setText("Choose a Continuous Planner!");
+    continuous_planners_label->setTextSize(40);
+
+    discrete_planners_label = tgui::Label::create();
+    discrete_planners_label->setPosition(140,50);
+    discrete_planners_label->setText("Choose a Discrete Planner!");
+    discrete_planners_label->setTextSize(40);
+
+    const sf::Vector2u button_size = {120,100};
+    const int initial_x = 100;
+    const int initial_y = 200;
+    const int spacing_x = button_size.x + 20;
+    const int spacing_y = button_size.y + 20;
+    const int rowcol = 3;
+    
+    for (size_t i = 0; i < app_data_->continuous_planners.size(); ++i)
+    {
+        auto button = tgui::Button::create();
+        button->setSize(button_size.x,button_size.y);
+        button->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
+        button->setText(app_data_->continuous_planners[i]);
+        button->setTextSize(15);
+        button->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->continuous_planners[i]);
+        continuous_map_buttons.emplace_back(button);
+    }
+    for (size_t i = 0; i < app_data_->discrete_planners.size(); ++i)
+    {
+        auto button = tgui::Button::create();
+        button->setSize(button_size.x,button_size.y);
+        button->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
+        button->setText(app_data_->discrete_planners[i]);
+        button->setTextSize(15);
+        button->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->discrete_planners[i]);
+        discrete_map_buttons.emplace_back(button);
+    }
     std::cout << "[PlannerGUI]: Planner GUI initialized!\n";
 }
 
@@ -35,8 +124,74 @@ PlannerGUI::~PlannerGUI() noexcept
     std::cout<<"[PlannerGUI]: Closing GUI now\n";
 }
 
-void PlannerGUI::run()
+void PlannerGUI::runGui()
 {
+    runMapAndPlannerChooser();
+    if (gui_state_ == GuiState::Quit)
+    {
+        return;
+    }
+    runObstacleSelector();      
+}
+
+void PlannerGUI::DrawHomeScreen()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    //adding stuff
+    gui_backend_chooser_.add(label_title);
+    gui_backend_chooser_.add(go_button);
+    gui_backend_chooser_.add(exit_button);
+    gui_backend_chooser_.add(canvas);
+    canvas->clear();
+    canvas->draw(img_sprite);
+    canvas->display();
+    go_button->setEnabled(1);
+    exit_button->setEnabled(1);
+}
+
+void PlannerGUI::DrawMapTypeScreen()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(label_description);
+    gui_backend_chooser_.add(continuous_map_button);
+    gui_backend_chooser_.add(discrete_map_button);
+    continuous_map_button->setEnabled(1);
+    discrete_map_button->setEnabled(1);
+}
+
+void PlannerGUI::DrawContinuousMapSelection()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(continuous_planners_label);
+    for (const auto& button : continuous_map_buttons)
+    {
+        gui_backend_chooser_.add(button);
+        button->setEnabled(1);
+    }
+}
+
+void PlannerGUI::DrawDiscreteMapSelection()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(discrete_planners_label);
+    for (const auto& button : discrete_map_buttons)
+    {
+        gui_backend_chooser_.add(button);
+        button->setEnabled(1);
+    }
+}
+
+void PlannerGUI::ChoosePlannerCallback(std::string planner_name)
+{
+    app_data_->setChosenPlanner(planner_name);
+    std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
+    gui_state_ = GuiState::Done;
+}
+
+void PlannerGUI::runMapAndPlannerChooser()
+{
+    gui_window_chooser_.create(sf::VideoMode(gui_window_chooser_size_.x,gui_window_chooser_size_.y,32),"Planner GUI");
+    gui_backend_chooser_.setTarget(gui_window_chooser_);
     while (gui_window_chooser_.isOpen())
     {
         sf::Event event;
@@ -50,208 +205,33 @@ void PlannerGUI::run()
             }
         }
         //gui_window_.clear(sf::Color::Red);
-        if (screen_num == 0){DrawHomeScreen();}
-        else if (screen_num == 1){DrawMapTypeScreen();}
-        else if (screen_num==2){DrawContinuousMapSelection();}
-        else if (screen_num==3){DrawDiscreteMapSelection();}
+        if (gui_state_ == GuiState::HomeScreen)
+        {
+            DrawHomeScreen();
+        }
+        else if (gui_state_ == GuiState::ChooseMapType)
+        {
+            DrawMapTypeScreen();
+        }
+        else if (gui_state_ == GuiState::ContinuousMapSelector)
+        {
+            DrawContinuousMapSelection();
+        }
+        else if (gui_state_ == GuiState::DiscreteMapSelector)
+        {
+            DrawDiscreteMapSelection();
+        }
+        else if (gui_state_ == GuiState::Quit || gui_state_ == GuiState::Done)
+        {
+            std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
+            gui_window_chooser_.close();
+            return;
+        }
         gui_backend_chooser_.draw();
         gui_window_chooser_.display();
         gui_window_chooser_.clear(sf::Color::Red);
     }
-    sf::sleep(sf::seconds(1));
-    if (!run_state_)
-    {
-        return; //end here
-    }
-    runObstacleSelector();      
 }
-
-void PlannerGUI::DrawHomeScreen()
-{
-    gui_backend_chooser_.removeAllWidgets();
-
-    auto label_title = tgui::Label::create(); 
-    auto go_button = tgui::Button::create("Go");
-    auto exit_button = tgui::Button::create("Exit");
-    sf::Texture img_texture;
-    sf::Sprite img_sprite;
-
-    label_title->setText("Path Planning Visualizations");
-    label_title->setTextSize(50);
-    label_title->setPosition(50,100);
-    
-    
-    go_button->setPosition(350,460);
-    go_button->setSize(150,120);
-    go_button->setText("GO!");
-    go_button->setTextSize(0);
-    go_button->onMousePress(&PlannerGUI::goCallback,this);
-
-    exit_button->setPosition(700,500);
-    exit_button->setSize(80,80);
-    exit_button->setText("Exit");
-    exit_button->setTextSize(0);
-    exit_button->onMousePress(&PlannerGUI::quitCallback,this);
-
-    img_texture.loadFromFile("themes/homescreen.png");
-    img_sprite.setTexture(img_texture);
-    img_sprite.setScale(200.f / img_texture.getSize().x, 200.f / img_texture.getSize().y);
-    auto canvas = tgui::Canvas::create({200, 200});
-    canvas->setPosition(320, 200);
-    canvas->clear();
-    canvas->draw(img_sprite);
-    canvas->display();
-
-    //adding stuff
-    gui_backend_chooser_.add(label_title);
-    gui_backend_chooser_.add(go_button);
-    gui_backend_chooser_.add(exit_button);
-    gui_backend_chooser_.add(canvas);
-
-}
-
-void PlannerGUI::quitCallback()
-{
-    this->run_state_ = false;
-    gui_window_chooser_.close(); //ToDO, use RAII standards to release resources using destructor
-}
-
-void PlannerGUI::goCallback()
-{
-    screen_num = 1;
-    //sf::sleep(sf::seconds(5));
-}
-
-void PlannerGUI::DrawMapTypeScreen()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    auto label_description = tgui::Label::create();
-    auto continuous_map_button = tgui::Button::create();
-    auto discrete_map_button = tgui::Button::create();
-
-    label_description->setText("Choose a Map Type!");
-    label_description->setTextSize(50);
-    label_description->setPosition(150,100);
-
-    continuous_map_button->setPosition(160,300);
-    continuous_map_button->setSize(180,120);
-    continuous_map_button->setText("Continuous\n      Map");
-    continuous_map_button->setTextSize(0);
-    continuous_map_button->onMousePress(&PlannerGUI::ContinuousMapTypeCallback,this);
-    
-    discrete_map_button->setPosition(480,300);
-    discrete_map_button->setSize(180,120);
-    discrete_map_button->setText("Discrete\n    Map");
-    discrete_map_button->setTextSize(28);
-    discrete_map_button->onMousePress(&PlannerGUI::DiscreteMapTypeCallback,this);
-
-    gui_backend_chooser_.add(label_description);
-    gui_backend_chooser_.add(continuous_map_button);
-    gui_backend_chooser_.add(discrete_map_button);
-}
-
-
-
-void PlannerGUI::ContinuousMapTypeCallback()
-{
-    if (app_data_->getChosenMap().size()!=0)
-    {
-        return;
-    }
-    app_data_->setChosenMap("continuous");
-    screen_num = 2;
-
-}
-
-void PlannerGUI::DiscreteMapTypeCallback()
-{
-    if (app_data_->getChosenMap().size() != 0)
-    {
-        return;
-    }
-    app_data_->setChosenMap("discrete");
-    screen_num = 3;
-}
-
-void PlannerGUI::DrawDiscreteMapSelection()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    int num_planners = app_data_->discrete_planners.size();
-    const int initial_x = 100;
-    const int initial_y = 200;
-    const sf::Vector2u button_size = {80,100};
-    const int spacing_x = button_size.x + 20;
-    const int spacing_y = button_size.y + 20;
-    const int rowcol = 3;
-    auto label = tgui::Label::create();
-    label->setPosition(140,50);
-    label->setText("Choose a Discrete Planner!");
-    label->setTextSize(40);
-    gui_backend_chooser_.add(label);
-    std::vector<tgui::Button::Ptr> buttons;
-
-    for (int i=0; i<num_planners ; ++i)
-    {
-        auto button = tgui::Button::create();
-        buttons.push_back(button);
-    }
-
-    for (int i = 0; i < num_planners; ++i)
-    {
-        buttons[i]->setSize(button_size.x,button_size.y);
-        buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
-        buttons[i]->setText(app_data_->discrete_planners[i]);
-        buttons[i]->setTextSize(0);
-        buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->discrete_planners[i]);
-        gui_backend_chooser_.add(buttons[i]);
-    }
-}
-
-void PlannerGUI::DrawContinuousMapSelection()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    int num_planners = app_data_->continuous_planners.size();
-    const int initial_x = 100;
-    const int initial_y = 200;
-    const sf::Vector2u button_size = {80,100};
-    const int spacing_x = button_size.x + 20;
-    const int spacing_y = button_size.y + 20;
-    const int rowcol = 3;
-    auto label = tgui::Label::create();
-    label->setPosition(140,50);
-    label->setText("Choose a Continuous Planner!");
-    label->setTextSize(40);
-    gui_backend_chooser_.add(label);
-    std::vector<tgui::Button::Ptr> buttons;
-
-    for (int i = 0; i < num_planners ; ++i)
-    {
-        auto button = tgui::Button::create();
-        buttons.push_back(button);
-    }
-
-    for (int i = 0; i < num_planners; ++i)
-    {
-        buttons[i]->setSize(button_size.x,button_size.y);
-        buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
-        buttons[i]->setText(app_data_->continuous_planners[i]);
-        buttons[i]->setTextSize(0);
-        buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->continuous_planners[i]);
-        gui_backend_chooser_.add(buttons[i]);
-    }
-}
-
-void PlannerGUI::ChoosePlannerCallback(std::string planner)
-{
-    app_data_->setChosenPlanner(planner);
-    std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
-    sf::sleep(sf::seconds(1));
-    gui_window_chooser_.close();
-}
-
 void PlannerGUI::runObstacleSelector()
 {
     gui_window_selector_.create(sf::VideoMode(gui_window_selector_size_.x,gui_window_selector_size_.y,32),"Selector GUI");
