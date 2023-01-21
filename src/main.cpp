@@ -9,7 +9,11 @@ int main() {
 
 std::shared_ptr<AppData> data= std::make_shared<AppData>();
 PlannerGUI gui (data);
-gui.run();
+bool status = gui.runGui();
+if (!status)
+{
+    return 0;
+}
 bool isDataOk = gui.DataTest();
 if (!isDataOk)
 {

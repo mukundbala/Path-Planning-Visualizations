@@ -2,21 +2,187 @@
 
 PlannerGUI::PlannerGUI(std::shared_ptr<AppData> data)
 {   
-    app_data_ = data;
+    app_data_ = data; //accessing data app data
+    
+    //setting all necessary app data
     gui_window_chooser_size_.x = app_data_->getGUIWindowX();
     gui_window_chooser_size_.y = app_data_->getGUIWindowY();
     gui_window_selector_size_.x = app_data_->getControlPaneWidth() + app_data_->getMapX();
     gui_window_selector_size_.y = app_data_->getMapY();
-    gui_window_chooser_.create(sf::VideoMode(gui_window_chooser_size_.x,gui_window_chooser_size_.y,32),"Planner GUI");
-    gui_backend_chooser_.setTarget(gui_window_chooser_);
+    resolution_ = app_data_->getResolution();
+    EPS=app_data_->getEPS();
+    
     background_color_ = sf::Color::Red;
     dark_theme_.setDefault("themes/Black.txt");
-    screen_num = 0;
+    
+    chooser_state_ = ChooserState::HomeScreen;
+    selector_state_ = SelectorState::NotStarted;
     default_circobs_radius_ = 10;
     default_rectobs_size_ = {(float)default_circobs_radius_*2,(float)default_circobs_radius_*2};
-    EPS=app_data_->getEPS();
-    resolution_ = app_data_->getResolution();
     run_state_ = true;
+
+    //creating the Buttons and Labels
+    label_title = tgui::Label::create();
+    label_title->setText("Path Planning Visualizations");
+    label_title->setTextSize(50);
+    label_title->setPosition(50,100);
+
+    go_button = tgui::Button::create();
+    go_button->setPosition(350,460);
+    go_button->setSize(150,120);
+    go_button->setText("GO!");
+    go_button->setTextSize(0);
+    go_button->onMousePress([&]{chooser_state_ = ChooserState::ChooseMapType;});
+
+    exit_button = tgui::Button::create();
+    exit_button->setPosition(700,500);
+    exit_button->setSize(80,80);
+    exit_button->setText("Exit");
+    exit_button->setTextSize(0);
+    exit_button->onMousePress([&]{chooser_state_ = ChooserState::Quit;});
+    
+    canvas = tgui::Canvas::create({200, 200});
+    img_texture.loadFromFile("themes/homescreen.png");
+    img_sprite.setTexture(img_texture);
+    img_sprite.setScale(200.f / img_texture.getSize().x, 200.f / img_texture.getSize().y);
+    canvas->setPosition(320, 200);
+
+    label_description = tgui::Label::create();
+    label_description->setText("Choose a Map Type!");
+    label_description->setTextSize(50);
+    label_description->setPosition(150,100);
+
+    continuous_map_button = tgui::Button::create();
+    continuous_map_button->setPosition(160,300);
+    continuous_map_button->setSize(180,120);
+    continuous_map_button->setText("Continuous\n      Map");
+    continuous_map_button->setTextSize(0);
+    continuous_map_button->onMousePress([&]{
+                                            chooser_state_ = ChooserState::ContinuousMapSelector;
+                                            app_data_->setChosenMap("continuous");});
+    
+    discrete_map_button = tgui::Button::create();
+    discrete_map_button->setPosition(480,300);
+    discrete_map_button->setSize(180,120);
+    discrete_map_button->setText("Discrete\n    Map");
+    discrete_map_button->setTextSize(28);
+    discrete_map_button->onMousePress([&]{
+                                            chooser_state_ = ChooserState::DiscreteMapSelector;
+                                            app_data_->setChosenMap("discrete");});
+    
+    continuous_planners_label = tgui::Label::create();
+    continuous_planners_label->setPosition(140,50);
+    continuous_planners_label->setText("Choose a Continuous Planner!");
+    continuous_planners_label->setTextSize(40);
+
+    discrete_planners_label = tgui::Label::create();
+    discrete_planners_label->setPosition(140,50);
+    discrete_planners_label->setText("Choose a Discrete Planner!");
+    discrete_planners_label->setTextSize(40);
+
+    const sf::Vector2u button_size = {120,100};
+    const int initial_x = 100;
+    const int initial_y = 200;
+    const int spacing_x = button_size.x + 20;
+    const int spacing_y = button_size.y + 20;
+    const int rowcol = 3;
+    
+    for (size_t i = 0; i < app_data_->continuous_planners.size(); ++i)
+    {
+        auto button = tgui::Button::create();
+        button->setSize(button_size.x,button_size.y);
+        button->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
+        button->setText(app_data_->continuous_planners[i]);
+        button->setTextSize(15);
+        button->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->continuous_planners[i]);
+        continuous_map_buttons.emplace_back(button);
+    }
+    for (size_t i = 0; i < app_data_->discrete_planners.size(); ++i)
+    {
+        auto button = tgui::Button::create();
+        button->setSize(button_size.x,button_size.y);
+        button->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
+        button->setText(app_data_->discrete_planners[i]);
+        button->setTextSize(15);
+        button->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->discrete_planners[i]);
+        discrete_map_buttons.emplace_back(button);
+    }
+    //control pane stuff
+    circle_obs_button = tgui::Button::create();
+    circle_obs_button->setSize(180,60);
+    circle_obs_button->setPosition(10,60);
+    circle_obs_button->setText("Draw Circle");
+    circle_obs_button->setTextSize(15);
+    circle_obs_button->onMousePress([&]{selector_state_=SelectorState::DrawCircle;});
+
+    rectangle_obs_button = tgui::Button::create();
+    rectangle_obs_button->setSize(180,60);
+    rectangle_obs_button->setPosition(10,140);
+    rectangle_obs_button->setText("Draw Rectangle");
+    rectangle_obs_button->setTextSize(15);
+    rectangle_obs_button->onMousePress([&]{selector_state_=SelectorState::DrawRectangle;});
+    
+    reset_last_circle_obs_button = tgui::Button::create();
+    reset_last_circle_obs_button->setSize(180,60);
+    reset_last_circle_obs_button->setPosition(10,220);
+    reset_last_circle_obs_button->setText("Reset Last Circle");
+    reset_last_circle_obs_button->setTextSize(15);
+    reset_last_circle_obs_button->onMousePress([&]{if(selector_state_ == SelectorState::NotStarted)
+                                            {return;}
+                                                selector_state_=SelectorState::ResetLastCircle;});
+    reset_last_rectangle_obs_button = tgui::Button::create();
+    reset_last_rectangle_obs_button->setSize(180,60);
+    reset_last_rectangle_obs_button->setPosition(10,300);
+    reset_last_rectangle_obs_button->setText("Reset Last Rectangle");
+    reset_last_rectangle_obs_button->setTextSize(15);
+    reset_last_rectangle_obs_button->onMousePress([&]{if(selector_state_ == SelectorState::NotStarted)
+                                            {return;}
+                                            selector_state_ = SelectorState::ResetLastRectangle;});
+    
+    reset_all_obstacle_button = tgui::Button::create();
+    reset_all_obstacle_button->setSize(180,60);
+    reset_all_obstacle_button->setPosition(10,380);
+    reset_all_obstacle_button->setText("Reset All");
+    reset_all_obstacle_button->setTextSize(15);
+    reset_all_obstacle_button->onMousePress([&]{if(selector_state_ == SelectorState::NotStarted)
+                                            {return;}
+                                            selector_state_=SelectorState::ResetAll;});
+    
+    random_obstacle_button = tgui::Button::create();
+    random_obstacle_button->setSize(180,60);
+    random_obstacle_button->setPosition(10,460);
+    random_obstacle_button->setText("Random Obstacle");
+    random_obstacle_button->setTextSize(15);
+    random_obstacle_button->onMousePress([&]{selector_state_=SelectorState::Random;});
+
+    done_button = tgui::Button::create();
+    done_button->setSize(180,60);
+    done_button->setPosition(10,540);
+    done_button->setText("Done");
+    done_button->setTextSize(15);
+    done_button->onMousePress([&]{selector_state_=SelectorState::Done;});
+
+    save_map_button = tgui::Button::create();
+    save_map_button->setSize(180,60);
+    save_map_button->setPosition(10,620);
+    save_map_button->setText("Save Map");
+    save_map_button->setTextSize(15);
+    save_map_button->onMousePress([&]{selector_state_=SelectorState::SaveMap;});
+
+    load_map_button = tgui::Button::create();
+    load_map_button->setSize(180,60);
+    load_map_button->setPosition(10,700);
+    load_map_button->setText("Load Map");
+    load_map_button->setTextSize(15);
+    load_map_button->onMousePress([&]{selector_state_=SelectorState::LoadMap;});
+
+    quit_button = tgui::Button::create();
+    quit_button->setSize(180,60);
+    quit_button->setPosition(10,780);
+    quit_button->setText("Quit");
+    quit_button->setTextSize(15);
+    quit_button->onMousePress([&]{selector_state_=SelectorState::Quit;});
+    
     std::cout << "[PlannerGUI]: Planner GUI initialized!\n";
 }
 
@@ -35,8 +201,70 @@ PlannerGUI::~PlannerGUI() noexcept
     std::cout<<"[PlannerGUI]: Closing GUI now\n";
 }
 
-void PlannerGUI::run()
+bool PlannerGUI::runGui()
 {
+    runMapAndPlannerChooser();
+    runObstacleSelector();
+    return run_state_;      
+}
+
+void PlannerGUI::DrawHomeScreen()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    //adding stuff
+    gui_backend_chooser_.add(label_title);
+    gui_backend_chooser_.add(go_button);
+    gui_backend_chooser_.add(exit_button);
+    gui_backend_chooser_.add(canvas);
+    canvas->clear();
+    canvas->draw(img_sprite);
+    canvas->display();
+    go_button->setEnabled(1);
+    exit_button->setEnabled(1);
+}
+
+void PlannerGUI::DrawMapTypeScreen()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(label_description);
+    gui_backend_chooser_.add(continuous_map_button);
+    gui_backend_chooser_.add(discrete_map_button);
+    continuous_map_button->setEnabled(1);
+    discrete_map_button->setEnabled(1);
+}
+
+void PlannerGUI::DrawContinuousMapSelection()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(continuous_planners_label);
+    for (const auto& button : continuous_map_buttons)
+    {
+        gui_backend_chooser_.add(button);
+        button->setEnabled(1);
+    }
+}
+
+void PlannerGUI::DrawDiscreteMapSelection()
+{
+    gui_backend_chooser_.removeAllWidgets();
+    gui_backend_chooser_.add(discrete_planners_label);
+    for (const auto& button : discrete_map_buttons)
+    {
+        gui_backend_chooser_.add(button);
+        button->setEnabled(1);
+    }
+}
+
+void PlannerGUI::ChoosePlannerCallback(std::string planner_name)
+{
+    app_data_->setChosenPlanner(planner_name);
+    chooser_state_ = ChooserState::Done;
+}
+
+void PlannerGUI::runMapAndPlannerChooser()
+{
+    gui_window_chooser_.create(sf::VideoMode(gui_window_chooser_size_.x,gui_window_chooser_size_.y,32),"Planner GUI");
+    gui_backend_chooser_.setTarget(gui_window_chooser_);
     while (gui_window_chooser_.isOpen())
     {
         sf::Event event;
@@ -50,214 +278,47 @@ void PlannerGUI::run()
             }
         }
         //gui_window_.clear(sf::Color::Red);
-        if (screen_num == 0){DrawHomeScreen();}
-        else if (screen_num == 1){DrawMapTypeScreen();}
-        else if (screen_num==2){DrawContinuousMapSelection();}
-        else if (screen_num==3){DrawDiscreteMapSelection();}
+        if (chooser_state_ == ChooserState::HomeScreen)
+        {
+            DrawHomeScreen();
+        }
+        else if (chooser_state_ == ChooserState::ChooseMapType)
+        {
+            DrawMapTypeScreen();
+        }
+        else if (chooser_state_ == ChooserState::ContinuousMapSelector)
+        {
+            DrawContinuousMapSelection();
+        }
+        else if (chooser_state_ == ChooserState::DiscreteMapSelector)
+        {
+            DrawDiscreteMapSelection();
+        }
+        else if (chooser_state_ == ChooserState::Done)
+        {
+            std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
+            gui_window_chooser_.close();
+            return;
+        }
+        else if (chooser_state_ == ChooserState::Quit)
+        {
+            gui_window_chooser_.close();
+            run_state_ = false;
+            return;
+        }
         gui_backend_chooser_.draw();
         gui_window_chooser_.display();
         gui_window_chooser_.clear(sf::Color::Red);
     }
-    sf::sleep(sf::seconds(1));
-    if (!run_state_)
-    {
-        return; //end here
-    }
-    runObstacleSelector();      
 }
-
-void PlannerGUI::DrawHomeScreen()
-{
-    gui_backend_chooser_.removeAllWidgets();
-
-    auto label_title = tgui::Label::create(); 
-    auto go_button = tgui::Button::create("Go");
-    auto exit_button = tgui::Button::create("Exit");
-    sf::Texture img_texture;
-    sf::Sprite img_sprite;
-
-    label_title->setText("Path Planning Visualizations");
-    label_title->setTextSize(50);
-    label_title->setPosition(50,100);
-    
-    
-    go_button->setPosition(350,460);
-    go_button->setSize(150,120);
-    go_button->setText("GO!");
-    go_button->setTextSize(0);
-    go_button->onMousePress(&PlannerGUI::goCallback,this);
-
-    exit_button->setPosition(700,500);
-    exit_button->setSize(80,80);
-    exit_button->setText("Exit");
-    exit_button->setTextSize(0);
-    exit_button->onMousePress(&PlannerGUI::quitCallback,this);
-
-    img_texture.loadFromFile("themes/homescreen.png");
-    img_sprite.setTexture(img_texture);
-    img_sprite.setScale(200.f / img_texture.getSize().x, 200.f / img_texture.getSize().y);
-    auto canvas = tgui::Canvas::create({200, 200});
-    canvas->setPosition(320, 200);
-    canvas->clear();
-    canvas->draw(img_sprite);
-    canvas->display();
-
-    //adding stuff
-    gui_backend_chooser_.add(label_title);
-    gui_backend_chooser_.add(go_button);
-    gui_backend_chooser_.add(exit_button);
-    gui_backend_chooser_.add(canvas);
-
-}
-
-void PlannerGUI::quitCallback()
-{
-    this->run_state_ = false;
-    gui_window_chooser_.close(); //ToDO, use RAII standards to release resources using destructor
-}
-
-void PlannerGUI::goCallback()
-{
-    screen_num = 1;
-    //sf::sleep(sf::seconds(5));
-}
-
-void PlannerGUI::DrawMapTypeScreen()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    auto label_description = tgui::Label::create();
-    auto continuous_map_button = tgui::Button::create();
-    auto discrete_map_button = tgui::Button::create();
-
-    label_description->setText("Choose a Map Type!");
-    label_description->setTextSize(50);
-    label_description->setPosition(150,100);
-
-    continuous_map_button->setPosition(160,300);
-    continuous_map_button->setSize(180,120);
-    continuous_map_button->setText("Continuous\n      Map");
-    continuous_map_button->setTextSize(0);
-    continuous_map_button->onMousePress(&PlannerGUI::ContinuousMapTypeCallback,this);
-    
-    discrete_map_button->setPosition(480,300);
-    discrete_map_button->setSize(180,120);
-    discrete_map_button->setText("Discrete\n    Map");
-    discrete_map_button->setTextSize(28);
-    discrete_map_button->onMousePress(&PlannerGUI::DiscreteMapTypeCallback,this);
-
-    gui_backend_chooser_.add(label_description);
-    gui_backend_chooser_.add(continuous_map_button);
-    gui_backend_chooser_.add(discrete_map_button);
-}
-
-
-
-void PlannerGUI::ContinuousMapTypeCallback()
-{
-    if (app_data_->getChosenMap().size()!=0)
-    {
-        return;
-    }
-    app_data_->setChosenMap("continuous");
-    screen_num = 2;
-
-}
-
-void PlannerGUI::DiscreteMapTypeCallback()
-{
-    if (app_data_->getChosenMap().size() != 0)
-    {
-        return;
-    }
-    app_data_->setChosenMap("discrete");
-    screen_num = 3;
-}
-
-void PlannerGUI::DrawDiscreteMapSelection()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    int num_planners = app_data_->discrete_planners.size();
-    const int initial_x = 100;
-    const int initial_y = 200;
-    const sf::Vector2u button_size = {80,100};
-    const int spacing_x = button_size.x + 20;
-    const int spacing_y = button_size.y + 20;
-    const int rowcol = 3;
-    auto label = tgui::Label::create();
-    label->setPosition(140,50);
-    label->setText("Choose a Discrete Planner!");
-    label->setTextSize(40);
-    gui_backend_chooser_.add(label);
-    std::vector<tgui::Button::Ptr> buttons;
-
-    for (int i=0; i<num_planners ; ++i)
-    {
-        auto button = tgui::Button::create();
-        buttons.push_back(button);
-    }
-
-    for (int i = 0; i < num_planners; ++i)
-    {
-        buttons[i]->setSize(button_size.x,button_size.y);
-        buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
-        buttons[i]->setText(app_data_->discrete_planners[i]);
-        buttons[i]->setTextSize(0);
-        buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->discrete_planners[i]);
-        gui_backend_chooser_.add(buttons[i]);
-    }
-}
-
-void PlannerGUI::DrawContinuousMapSelection()
-{
-    gui_backend_chooser_.removeAllWidgets();
-    
-    int num_planners = app_data_->continuous_planners.size();
-    const int initial_x = 100;
-    const int initial_y = 200;
-    const sf::Vector2u button_size = {80,100};
-    const int spacing_x = button_size.x + 20;
-    const int spacing_y = button_size.y + 20;
-    const int rowcol = 3;
-    auto label = tgui::Label::create();
-    label->setPosition(140,50);
-    label->setText("Choose a Continuous Planner!");
-    label->setTextSize(40);
-    gui_backend_chooser_.add(label);
-    std::vector<tgui::Button::Ptr> buttons;
-
-    for (int i = 0; i < num_planners ; ++i)
-    {
-        auto button = tgui::Button::create();
-        buttons.push_back(button);
-    }
-
-    for (int i = 0; i < num_planners; ++i)
-    {
-        buttons[i]->setSize(button_size.x,button_size.y);
-        buttons[i]->setPosition(initial_x + spacing_x * (i / rowcol),initial_y + spacing_y * (i % rowcol));
-        buttons[i]->setText(app_data_->continuous_planners[i]);
-        buttons[i]->setTextSize(0);
-        buttons[i]->onMousePress(&PlannerGUI::ChoosePlannerCallback,this,app_data_->continuous_planners[i]);
-        gui_backend_chooser_.add(buttons[i]);
-    }
-}
-
-void PlannerGUI::ChoosePlannerCallback(std::string planner)
-{
-    app_data_->setChosenPlanner(planner);
-    std::cout<<"[Planner GUI]: Planner and Map Chosen. Prepare to set Obstacles\n";
-    sf::sleep(sf::seconds(1));
-    gui_window_chooser_.close();
-}
-
 void PlannerGUI::runObstacleSelector()
 {
+    if (!run_state_)
+    {
+        return;
+    }
     gui_window_selector_.create(sf::VideoMode(gui_window_selector_size_.x,gui_window_selector_size_.y,32),"Selector GUI");
     gui_backend_selector_.setTarget(gui_window_selector_);
-    
-    Actions state = Actions::NotStarted;
     
     sf::Clock selector_clock; // check how long the mouse has be held
     bool pos_mouse = 0;
@@ -265,10 +326,16 @@ void PlannerGUI::runObstacleSelector()
     sf::Int32 neg_mouse_time = 0;
     sf::Vector2f pos_mouse_pos = {-1,-1};
     sf::Vector2f neg_mouse_pos = {-1,-1};
-    
+
+    const int x_lower = app_data_->getControlPaneWidth();
+    const int x_higher = (int)gui_window_selector_.getSize().x;
+    const int y_lower = 0;
+    const int y_higher = (int)gui_window_selector_.getSize().y;
+
     //handle duplicate checking for discrete points faster (in O(1)) using boolean flat array 
+    int num_cols = (app_data_->getMapX() / resolution_.first);
     std::vector<int> discrete_point_tester((app_data_->getMapX() / resolution_.first) * (app_data_->getMapY() / resolution_.second),0); 
-    
+    std::vector<Vec2D> points_selected;
     while (gui_window_selector_.isOpen())
     {
         sf::Event event;
@@ -279,17 +346,16 @@ void PlannerGUI::runObstacleSelector()
             {
                 gui_window_selector_.close();
                 run_state_ = false;
+                break; //break from the callback poll, and break out of the program loop
             }
 
             if (app_data_->getChosenMap()=="continuous")
             {
                 if (event.type == sf::Event::MouseButtonPressed && !pos_mouse) 
                 {
-                    if ((state == Actions::DrawCircle || state==Actions::DrawRectangle) && 
-                        event.mouseButton.x > app_data_->getControlPaneWidth() && 
-                        event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
-                        event.mouseButton.y >= 0 &&
-                        event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                    if ((selector_state_ == SelectorState::DrawCircle || selector_state_==SelectorState::DrawRectangle) && 
+                        event.mouseButton.x >= x_lower && event.mouseButton.x < x_higher &&
+                        event.mouseButton.y >= y_lower &&event.mouseButton.y < y_higher)
                     {
                         pos_mouse = true; //positive mouse press detected
                         pos_mouse_time = selector_clock.getElapsedTime().asMilliseconds(); //record time
@@ -300,11 +366,9 @@ void PlannerGUI::runObstacleSelector()
 
                 if (event.type == sf::Event::MouseButtonReleased && pos_mouse)
                 {
-                    if ((state == Actions::DrawCircle || state == Actions::DrawRectangle) && 
-                        event.mouseButton.x > app_data_->getControlPaneWidth() && 
-                        event.mouseButton.x < (int)gui_window_selector_.getSize().x &&
-                        event.mouseButton.y >= 0 &&
-                        event.mouseButton.y < (int)gui_window_selector_.getSize().y)
+                    if ((selector_state_ == SelectorState::DrawCircle || selector_state_ == SelectorState::DrawRectangle) && 
+                        event.mouseButton.x >= x_lower && event.mouseButton.x < x_higher &&
+                        event.mouseButton.y >= y_lower && event.mouseButton.y < y_higher)
                     {
                         neg_mouse_time = selector_clock.getElapsedTime().asMilliseconds();
                         if (abs(neg_mouse_time - pos_mouse_time) >= 5)
@@ -316,13 +380,13 @@ void PlannerGUI::runObstacleSelector()
                                                         +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
                             if (dist_between >= 10)
                             {
-                                if (state == Actions::DrawCircle)
+                                if (selector_state_ == SelectorState::DrawCircle)
                                 {
                                 CircleObstacle circ(dist_between/2,pos_mouse_pos);
                                 app_data_->circle_obs_array.array.emplace_back(circ);
                                 std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
                                 }
-                                else if (state == Actions::DrawRectangle)
+                                else if (selector_state_ == SelectorState::DrawRectangle)
                                 {
                                     sf::Vector2f size = {abs(pos_mouse_pos.x-neg_mouse_pos.x),abs(pos_mouse_pos.y-neg_mouse_pos.y)};
 
@@ -363,127 +427,61 @@ void PlannerGUI::runObstacleSelector()
                 }
             }
 
-            else if (app_data_->getChosenMap() == "discrete")
+            else if (app_data_->getChosenMap() == "discrete" && selector_state_ == SelectorState::DrawRectangle)
             {
                 if (event.type == sf::Event::MouseButtonPressed)
                 {
                     double posx = event.mouseButton.x;
                     double posy = event.mouseButton.y;
-                    if (state == Actions::DrawRectangle && posx > app_data_->getControlPaneWidth())
+                    bool isPointInRange = posx >= x_lower && posx < x_higher && posy >= y_lower && posy < y_higher;
+                    if (isPointInRange)
                     {
                         Vec2D pos_cont_non_origin(posx,posy);
                         Vec2D pos_grid = pos_cont_non_origin.ContinuousSpaceToGridSpace(resolution_,gui_window_selector_size_.x,gui_window_selector_size_.y,app_data_->getControlPaneWidth(),0);
-                        int num_cols = (app_data_->getMapX() / resolution_.first);
                         int idx_to_check =  num_cols * pos_grid.y() + pos_grid.x();
                         bool isPointValid = !discrete_point_tester[idx_to_check];
                         if (isPointValid)
                         {
+                            discrete_point_tester[idx_to_check]=1;
                             Vec2D pos_cont_origin = pos_grid.GridSpaceToContinuousSpace(resolution_,app_data_->getControlPaneWidth(),0);
                             RectangleObstacle newobs(sf::Vector2f(resolution_.first,resolution_.second),pos_cont_origin);
                             app_data_ ->rect_obs_array.array.push_back(newobs);
-                            discrete_point_tester[idx_to_check]=1;
                         }
                     }
                 }
             }
-        }
-        gui_backend_selector_.removeAllWidgets();
+        } //end of callback and event handling
 
-        auto circle_obs_button = tgui::Button::create();
-        circle_obs_button->setSize(160,80);
-        circle_obs_button->setPosition(20,100);
-        circle_obs_button->setText("Draw Circle");
-        circle_obs_button->setTextSize(15);
-        circle_obs_button->onMousePress([&]{state=Actions::DrawCircle;});
-        gui_backend_selector_.add(circle_obs_button);
-        
-        auto rectangle_obs_button = tgui::Button::create();
-        rectangle_obs_button->setSize(160,80);
-        rectangle_obs_button->setPosition(20,200);
-        rectangle_obs_button->setText(" Draw Rectangle");
-        rectangle_obs_button->setTextSize(15);
-        rectangle_obs_button->onMousePress([&]{state=Actions::DrawRectangle;});
-        gui_backend_selector_.add(rectangle_obs_button);
-        
-        auto reset_last_circle_obs_button = tgui::Button::create();
-        reset_last_circle_obs_button->setSize(160,80);
-        reset_last_circle_obs_button->setPosition(20,300);
-        reset_last_circle_obs_button->setText("Reset Last Circle");
-        reset_last_circle_obs_button->setTextSize(15);
-        reset_last_circle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
-                                                {return;}
-                                                state=Actions::ResetLastCircle;});
-        gui_backend_selector_.add(reset_last_circle_obs_button);
-
-        auto reset_last_rectangle_obs_button = tgui::Button::create();
-        reset_last_rectangle_obs_button->setSize(160,80);
-        reset_last_rectangle_obs_button->setPosition(20,400);
-        reset_last_rectangle_obs_button->setText("Reset Last Rectangle");
-        reset_last_rectangle_obs_button->setTextSize(15);
-        reset_last_rectangle_obs_button->onMousePress([&]{if(state == Actions::NotStarted)
-                                                {return;}
-                                                state = Actions::ResetLastRectangle;});
-        gui_backend_selector_.add(reset_last_rectangle_obs_button);
-        
-        auto reset_all_obstacle_button = tgui::Button::create();
-        reset_all_obstacle_button->setSize(160,80);
-        reset_all_obstacle_button->setPosition(20,500);
-        reset_all_obstacle_button->setText("Reset\n All");
-        reset_all_obstacle_button->setTextSize(15);
-        reset_all_obstacle_button->onMousePress([&]{if(state == Actions::NotStarted)
-                                                {return;}
-                                                state=Actions::ResetAll;});
-        gui_backend_selector_.add(reset_all_obstacle_button);
-        
-        auto random_obstacle_button = tgui::Button::create();
-        random_obstacle_button->setSize(160,80);
-        random_obstacle_button->setPosition(20,600);
-        random_obstacle_button->setText("Random Obstacle");
-        random_obstacle_button->setTextSize(15);
-        random_obstacle_button->onMousePress([&]{state=Actions::Random;});
-        gui_backend_selector_.add(random_obstacle_button);
-        
-        auto done_button = tgui::Button::create();
-        done_button->setSize(160,80);
-        done_button->setPosition(20,700);
-        done_button->setText("Done");
-        done_button->setTextSize(15);
-        done_button->onMousePress([&]{if(state == Actions::NotStarted)
-                                                {return;}
-                                                state=Actions::Done;});
-        gui_backend_selector_.add(done_button);
-
-        if (state ==  Actions::Done)
+        if (!run_state_)
         {
-            gui_window_selector_.close();
-            return;
+            return; //we kill the program here if the window was closed
         }
-
-        if (state == Actions::ResetLastCircle)
+        //do actions are various states. 
+        if (selector_state_ == SelectorState::ResetLastCircle)
         {
             if (app_data_ ->getChosenMap() == "discrete")
             {
                 assert(app_data_ ->circle_obs_array.array.empty());
                 std::cout<<"[Obstacle Selector]: Circle obstacles unavailable for discrete map.\n";
-                state = Actions::DrawRectangle;
+                selector_state_ = SelectorState::DrawRectangle;
             }
             else if (app_data_->getChosenMap() == "continuous")
             {
                 if (app_data_->circle_obs_array.array.size()>0)
                 {
                     app_data_->circle_obs_array.array.pop_back();
-                    state=Actions::DrawCircle; //reset state
+                    selector_state_ = SelectorState::DrawCircle; //reset state
                     std::cout << "[Obstacle Selector]: Circle Obstacles Removed!\n";
                 }
                 else 
                 {
                     std::cout << "[Obstacle Selector]: No Circle Obstacles Left!\n";
-                    state = Actions::DrawCircle; //reset state
+                    selector_state_ = SelectorState::DrawCircle; //reset state
                 }
             }
         }
         
-        else if (state == Actions::ResetLastRectangle)
+        else if (selector_state_ == SelectorState::ResetLastRectangle)
         {
             if (app_data_->getChosenMap()=="continuous")
             {    
@@ -491,12 +489,12 @@ void PlannerGUI::runObstacleSelector()
                 {
                     app_data_->rect_obs_array.array.pop_back();
                     std::cout << "[Obstacle Selector]: Rectangle Obstacle Removed!\n";
-                    state = Actions::DrawRectangle;
+                    selector_state_ = SelectorState::DrawRectangle;
                 }
                 else
                 {
                     std::cout << "[Obstacle Selector]: No Rectangle Obstacles Left\n";
-                    state = Actions::DrawRectangle; //reset state
+                    selector_state_ = SelectorState::DrawRectangle; //reset state
                 }
             }
             else if (app_data_->getChosenMap()=="discrete")
@@ -517,7 +515,7 @@ void PlannerGUI::runObstacleSelector()
                     discrete_point_tester[flattened_coords] = 0;
                     app_data_ ->rect_obs_array.array.pop_back();
                     std::cout << "[ObstacleSelector]: Rectangle Obstacle Removed!\n";
-                    state = Actions::DrawRectangle;
+                    selector_state_ = SelectorState::DrawRectangle;
                 }
                 else
                 {
@@ -526,7 +524,7 @@ void PlannerGUI::runObstacleSelector()
             }
         }
 
-        else if (state == Actions::ResetAll)
+        else if (selector_state_ == SelectorState::ResetAll)
         {
             if (app_data_->circle_obs_array.array.size()>0)
             {
@@ -546,45 +544,179 @@ void PlannerGUI::runObstacleSelector()
                 }
             }
             std::cout << "[Obstacle Selector]: Obstacle selections cleared!\n";
-            state = Actions::DrawRectangle;
-
+            selector_state_ = SelectorState::DrawRectangle;
         }
 
-        else if (state==Actions::Random)
+        else if (selector_state_ == SelectorState::Random)
         {
             if (app_data_->getChosenMap() == "continuous")
             {
                 GenerateRandomContinuous();
-                state=Actions::DrawRectangle;
+                selector_state_ = SelectorState::DrawRectangle;
             }
             else if (app_data_->getChosenMap() == "discrete"){
                 GenerateRandomDiscrete(discrete_point_tester);
-                state=Actions::DrawRectangle;
+                selector_state_ = SelectorState::DrawRectangle;
             }
         }
+
+        else if (selector_state_ == SelectorState::SaveMap)
+        {
+            std::string map_name;
+            std::string chosen_map_type = app_data_->getChosenMap();
+            std::cout << "[PlannerGUI]: Enter your desired map name!:";
+            std::cin >> map_name;
+            map_name += ".yaml";
+            std::filesystem::path path_to_map{"maps/" + chosen_map_type};
+            path_to_map /= map_name;
+
+            int number_circle_obs = app_data_ ->circle_obs_array.array.size();
+            int number_rectangle_obs = app_data_ ->rect_obs_array.array.size();
+            
+            YAML::Emitter emtr;
+            //emtr << YAML::Comment << "Do not modify saved maps!";
+            emtr << YAML::BeginMap;
+            emtr << YAML::Key << "map_type";
+            emtr << YAML::Value << chosen_map_type;
+            emtr << YAML::Key << "number_of_rectangle_obstacles";
+            emtr << YAML::Value << number_rectangle_obs;
+            emtr << YAML::Key << "number_of_circle_obstacles";
+            emtr << YAML::Value << number_circle_obs;
+            
+            if (app_data_->rect_obs_array.array.size()!=0)
+            {
+                emtr << YAML::Key << "rectangle_obstacles";
+                emtr << YAML::Value;
+                emtr << YAML::BeginSeq;
+                for (size_t i = 0 ; i<number_rectangle_obs ; ++i)
+                {
+                    sf::Vector2f size = app_data_->rect_obs_array.array.at(i).getSize();
+                    sf::Vector2f pos = app_data_->rect_obs_array.array.at(i).getPosition();
+                    std::vector<float> size_vec = {size.x , size.y};
+                    std::vector<float> pos_vec = {pos.x , pos.y};
+                    emtr << YAML::BeginMap;
+                    emtr << YAML::Key << "index";
+                    emtr << YAML::Value << i;
+                    emtr << YAML::Key << "size";
+                    emtr << YAML::Value;
+                    emtr << YAML::Flow << size_vec;
+                    emtr << YAML::Key << "position";
+                    emtr << YAML::Flow << pos_vec;
+                    emtr << YAML::EndMap;
+                }
+                emtr << YAML::EndSeq;
+            }
+
+            if (app_data_->circle_obs_array.array.size()!=0)
+            {
+                emtr << YAML::Key << "circle_obstacles";
+                emtr << YAML::Value;
+                emtr << YAML::BeginSeq;
+                for (size_t i = 0 ; i<number_circle_obs ; ++i)
+                {
+                    double radius = app_data_->circle_obs_array.array.at(i).getRadius();
+                    sf::Vector2f pos = app_data_->circle_obs_array.array.at(i).getPosition();
+                    std::vector<float> pos_vec = {pos.x , pos.y};
+                    emtr << YAML::BeginMap;
+                    emtr << YAML::Key << "index";
+                    emtr << YAML::Value << i;
+                    emtr << YAML::Key << "radius";
+                    emtr << YAML::Value << radius;
+                    emtr << YAML::Key << "position";
+                    emtr << YAML::Flow << pos_vec;
+                    emtr << YAML::EndMap;
+                }
+                emtr << YAML::EndSeq;
+            }
+            std::cout<<"[PlannerGUI]: Saving map now!\n";
+            if (number_circle_obs + number_rectangle_obs == 0)
+            {
+                std::cout<<"[PlannerGUI]: You are saving an empty map!\n";
+            }
+            std::ofstream fout(path_to_map);
+            fout << emtr.c_str();
+            std::cout<<"[PlannerGUI]: Map saved!\n";
+            selector_state_ = SelectorState::DrawRectangle;
+        }
+
+        else if (selector_state_ == SelectorState::LoadMap)
+        {
+            std::string map_name; //ensure that this in the correct map type subdirectory
+            std::cout<<"[PlannerGUI]: Input name of map to be loaded: ";
+            std::cin >> map_name;
+            map_name += ".yaml";
+            std::string path_to_load = "maps/" +app_data_->getChosenMap() + "/" + map_name;
+            YAML::Node loader = YAML::LoadFile(path_to_load);
+            int num_rect_obs = loader["number_of_rectangle_obstacles"].as<int>();
+            int num_circle_obs = loader["number_of_circle_obstacles"].as<int>();
+            
+            std::cout<<"[PlannerGUI]: Loading a map will erase existing map.\n";
+            app_data_->rect_obs_array.array.clear();
+            app_data_->circle_obs_array.array.clear();
+            std::cout<<"[PlannerGUI]: Existing map erased. Loading map now\n";
+            if (num_rect_obs+num_circle_obs == 0)
+            {
+                std::cout<<"[PlannerGUI]: You are loading an empty map\n";
+            }
+            else
+            {
+                if (num_rect_obs > 0)
+                {
+                    for (std::size_t i=0 ; i<num_rect_obs;i++)
+                    {
+                        std::vector<float> size_array;
+                        std::vector<float> pos_array;
+                        for (std::size_t j =0 ; j<2; ++j)
+                        {
+                            float size_val = loader["rectangle_obstacles"][i]["size"][j].as<float>();
+                            float pos_val = loader["rectangle_obstacles"][i]["position"][j].as<float>();
+                            size_array.push_back(size_val);
+                            pos_array.push_back(pos_val);
+                        }
+                        sf::Vector2f size(size_array[0],size_array[1]);
+                        sf::Vector2f pos(pos_array[0],pos_array[1]);
+                        RectangleObstacle rectObs(size,pos);
+                        app_data_->rect_obs_array.array.emplace_back(rectObs);
+                    }
+                    std::cout<<"[PlannerGUI]: Loaded rectangle obstacles!\n";
+                }
+                if (num_circle_obs > 0)
+                {
+                    for (std::size_t i=0 ; i<num_circle_obs;i++)
+                    {
+                        double radius = loader["circle_obstacles"][i]["radius"].as<double>();
+                        std::vector<float> pos_array;
+                        for (std::size_t j = 0 ; j<2; ++j)
+                        {
+                            float pos_val = loader["circle_obstacles"][i]["position"][j].as<double>();
+                            pos_array.push_back(pos_val);
+                        }
+                        sf::Vector2f pos(pos_array[0],pos_array[1]);
+                        CircleObstacle circleObs(radius, pos);
+                        app_data_->circle_obs_array.array.emplace_back(circleObs);
+                    }
+                    std::cout<<"[PlannerGUI]: Loaded circle obstacles!\n";
+                }
+                std::cout<<"[PlannerGUI]: Loaded all obstacles successfully!\n";
+            }
+            selector_state_ = SelectorState::DrawRectangle;
+        }
         
-        for (const auto& circ_obs : app_data_->circle_obs_array.array)
+        else if (selector_state_ ==  SelectorState::Done)
         {
-            gui_window_selector_.draw(circ_obs.shape);
+            gui_window_selector_.close();
+            return;
         }
 
-        for (const auto& rect_obs : app_data_->rect_obs_array.array)
+        else if (selector_state_ == SelectorState::Quit)
         {
-            gui_window_selector_.draw(rect_obs.shape);
+            gui_window_selector_.close();
+            run_state_ = false;
+            return;
         }
-
-        if (app_data_ -> getChosenMap() == "discrete")
-        {
-            GenerateGrids();
-        }
-        sf::RectangleShape control_pane_background;
-        control_pane_background.setPosition(0,0);
-        control_pane_background.setSize(sf::Vector2f(200,gui_window_selector_.getSize().y));
-        control_pane_background.setFillColor(sf::Color::Yellow);
-        gui_window_selector_.draw(control_pane_background);
-        gui_backend_selector_.draw();
-        gui_window_selector_.display();
         gui_window_selector_.clear(sf::Color::Black);
+        DrawSelectorWindow();
+        gui_window_selector_.display();
     }
 }
 
@@ -655,6 +787,46 @@ void PlannerGUI::GenerateRandomContinuous()
     std::cout<<"[ObstacleSelector]: " << app_data_->rect_obs_array.array.size() << " Rectangle Obstacles created!\n";
 }
 
+void PlannerGUI::DrawControlPane()
+{
+    gui_backend_selector_.removeAllWidgets();
+    sf::RectangleShape control_pane_background;
+    control_pane_background.setPosition(0,0);
+    control_pane_background.setSize(sf::Vector2f(200,gui_window_selector_.getSize().y));
+    control_pane_background.setFillColor(sf::Color::Yellow);
+    gui_window_selector_.draw(control_pane_background);
+    gui_backend_selector_.add(circle_obs_button);
+    gui_backend_selector_.add(rectangle_obs_button);
+    gui_backend_selector_.add(reset_last_circle_obs_button);
+    gui_backend_selector_.add(reset_last_rectangle_obs_button);
+    gui_backend_selector_.add(reset_all_obstacle_button);
+    gui_backend_selector_.add(random_obstacle_button);
+    gui_backend_selector_.add(save_map_button);
+    gui_backend_selector_.add(load_map_button);
+    gui_backend_selector_.add(quit_button);
+    gui_backend_selector_.add(done_button);
+    gui_backend_selector_.draw();
+}
+
+void PlannerGUI::DrawSelectorWindow()
+{
+    DrawControlPane();
+    //drawing circle obstacles
+    for (const auto& circ_obs : app_data_->circle_obs_array.array)
+    {
+        gui_window_selector_.draw(circ_obs.shape);
+    }
+
+    //drawing rectangle obstacles
+    for (const auto& rect_obs : app_data_->rect_obs_array.array)
+    {
+        gui_window_selector_.draw(rect_obs.shape);
+    }
+    if (app_data_ -> getChosenMap() == "discrete")
+    {
+        GenerateGrids();
+    }
+}
 void PlannerGUI::GenerateGrids()
 {
     int x_lower=app_data_->getControlPaneWidth();
@@ -663,7 +835,7 @@ void PlannerGUI::GenerateGrids()
     int y_higher = app_data_ ->getMapY();
     for (int i=x_lower+resolution_.first; i<x_higher ; i+=resolution_.first)
     {
-        sf::Vector2f pt1(i,0);
+        sf::Vector2f pt1(i,y_lower);
         sf::Vector2f pt2(i,y_higher-1);
         sf::Vertex vertical_line[]=
         {
@@ -674,7 +846,7 @@ void PlannerGUI::GenerateGrids()
     }
     for (int i=y_lower+resolution_.second; i<y_higher ; i+=resolution_.second)
     {
-        sf::Vector2f pt1(0,i);
+        sf::Vector2f pt1(x_lower,i);
         sf::Vector2f pt2(x_higher-1,i);
         sf::Vertex horizontal_line[]=
         {
@@ -843,15 +1015,7 @@ bool PlannerGUI::DataTest()
     int total_obstacles = num_circ_obs + num_rect_obs;
     if (total_obstacles == 0)
     {
-        std::cout<<"[DataCheck]: No obstacles have been created. Are you sure you want an empty map?Y/N\n";
-        std::string ans;
-        std::cin>>ans;
-        if (ans == "N" || ans == "n")
-        {
-            pass = false;
-            std::cout<<"[DataCheck]: Please restart planner gui, and remember to add obstacles!\n";
-            return pass;
-        }
+        std::cout<<"[DataCheck]: No obstacles have been created.\n";
     }
     else
     {

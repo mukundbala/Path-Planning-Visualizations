@@ -1,7 +1,7 @@
 
 map_width: 1200
-
 num_random_obstacles: 350
+resolution: [20,20]
 continuous_planner:  
   - RRT
   - RRTStar
@@ -10,5 +10,3 @@ continuous_planner:
 discrete_planner:
   - BFS
   - DFS
-  
-resolution: [20,20]

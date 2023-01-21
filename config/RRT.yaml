@@ -1,5 +1,5 @@
 planner_name: RRT
-step: 8.0
-bias: 0.2
-goal_radius: 7.0
-max_iterations: 100000
+step: 15.0
+bias: 0.1
+goal_radius: 15.0
+max_iterations: 1000

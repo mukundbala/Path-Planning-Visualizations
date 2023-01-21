@@ -198,8 +198,9 @@ double Vec2D::dot(Vec2D& rhs)const
 
 void Vec2D::normalize()
 {
-    this->x_ /= this->mag();
-    this->y_ /= this->mag();
+    const double magnitude = this->mag();
+    this->x_ /= magnitude;
+    this->y_ /= magnitude;
 }
 
 Vec2D Vec2D::normalize()const
