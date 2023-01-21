@@ -7,6 +7,8 @@
 #include <memory>
 #include <random>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
 
 #include <obstacles.hpp>
 #include <data.hpp>
@@ -17,6 +19,21 @@ enum class ChooserState:unsigned short
     ChooseMapType,
     ContinuousMapSelector,
     DiscreteMapSelector,
+    Done,
+    Quit,
+};
+
+enum class SelectorState:unsigned short
+{
+    NotStarted,
+    DrawCircle,
+    DrawRectangle,
+    ResetLastCircle,
+    ResetLastRectangle,
+    ResetAll,
+    Random,
+    SaveMap,
+    LoadMap,
     Done,
     Quit,
 };
@@ -39,6 +56,7 @@ private:
     tgui::Theme blue_theme_;
     //GUIStates
     ChooserState chooser_state_;
+    SelectorState selector_state_;
     std::shared_ptr<AppData> app_data_;
     sf::Vector2f default_rectobs_size_; //used for generating obstacles in random mode
     double default_circobs_radius_; //used for generating obstacles in random mode
@@ -62,10 +80,21 @@ private:
     std::vector<tgui::Button::Ptr> discrete_map_buttons;
     tgui::Label::Ptr discrete_planners_label;
 
+    tgui::Button::Ptr circle_obs_button;
+    tgui::Button::Ptr rectangle_obs_button;
+    tgui::Button::Ptr reset_last_circle_obs_button;
+    tgui::Button::Ptr reset_last_rectangle_obs_button;
+    tgui::Button::Ptr reset_all_obstacle_button;
+    tgui::Button::Ptr random_obstacle_button;
+    tgui::Button::Ptr save_map_button;
+    tgui::Button::Ptr load_map_button;
+    tgui::Button::Ptr done_button;
+    tgui::Button::Ptr quit_button;
+
 public:
     PlannerGUI(std::shared_ptr<AppData> data);
     ~ PlannerGUI() noexcept;
-    void runGui();
+    bool runGui();
     void runMapAndPlannerChooser();
     void runObstacleSelector();
     //Screens
@@ -75,23 +104,12 @@ public:
     void DrawContinuousMapSelection();
     void ChoosePlannerCallback(std::string planner);
     void GenerateRandomContinuous();
-
+    void DrawControlPane();
+    void DrawSelectorWindow();
     void GenerateGrids();
     void GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker);
     bool checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<int> &discrete_point_tracker, int map_size_x);
-
     bool DataTest(); 
-    enum class Actions:unsigned short
-    {
-        NotStarted,
-        DrawCircle,
-        DrawRectangle,
-        ResetLastCircle,
-        ResetLastRectangle,
-        ResetAll,
-        Random,
-        Done,
-    };
     //widgets
 
 };

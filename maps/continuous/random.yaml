@@ -1,0 +1,1055 @@
+map_type: continuous
+number_of_rectangle_obstacles: 175
+number_of_circle_obstacles: 175
+rectangle_obstacles:
+  - index: 0
+    size: [20, 20]
+    position: [875.1811, 678.5006]
+  - index: 1
+    size: [20, 20]
+    position: [1098.334, 457.2859]
+  - index: 2
+    size: [20, 20]
+    position: [796.5676, 417.5261]
+  - index: 3
+    size: [20, 20]
+    position: [315.6039, 366.1281]
+  - index: 4
+    size: [20, 20]
+    position: [990.5503, 565.8871]
+  - index: 5
+    size: [20, 20]
+    position: [1250.817, 692.4326]
+  - index: 6
+    size: [20, 20]
+    position: [686.3094, 660.4879]
+  - index: 7
+    size: [20, 20]
+    position: [960.7332, 889.0529]
+  - index: 8
+    size: [20, 20]
+    position: [426.2282, 680.5536]
+  - index: 9
+    size: [20, 20]
+    position: [412.3942, 104.9202]
+  - index: 10
+    size: [20, 20]
+    position: [428.899, 402.5893]
+  - index: 11
+    size: [20, 20]
+    position: [1029.263, 169.8743]
+  - index: 12
+    size: [20, 20]
+    position: [267.2155, 346.7027]
+  - index: 13
+    size: [20, 20]
+    position: [662.2898, 597.4512]
+  - index: 14
+    size: [20, 20]
+    position: [1076.241, 470.3683]
+  - index: 15
+    size: [20, 20]
+    position: [470.0019, 652.9747]
+  - index: 16
+    size: [20, 20]
+    position: [265.7458, 139.2535]
+  - index: 17
+    size: [20, 20]
+    position: [293.5267, 666.259]
+  - index: 18
+    size: [20, 20]
+    position: [732.0807, 440.7287]
+  - index: 19
+    size: [20, 20]
+    position: [1335.601, 186.9577]
+  - index: 20
+    size: [20, 20]
+    position: [472.4565, 146.4991]
+  - index: 21
+    size: [20, 20]
+    position: [679.124, 746.3691]
+  - index: 22
+    size: [20, 20]
+    position: [1156.474, 142.6021]
+  - index: 23
+    size: [20, 20]
+    position: [321.8179, 545.7458]
+  - index: 24
+    size: [20, 20]
+    position: [1243.154, 241.7544]
+  - index: 25
+    size: [20, 20]
+    position: [1219.289, 326.4418]
+  - index: 26
+    size: [20, 20]
+    position: [777.133, 579.2094]
+  - index: 27
+    size: [20, 20]
+    position: [629.3015, 270.0746]
+  - index: 28
+    size: [20, 20]
+    position: [735.9985, 99.99689]
+  - index: 29
+    size: [20, 20]
+    position: [347.4334, 76.07768]
+  - index: 30
+    size: [20, 20]
+    position: [1206.952, 367.1562]
+  - index: 31
+    size: [20, 20]
+    position: [759.0673, 467.5144]
+  - index: 32
+    size: [20, 20]
+    position: [1340.068, 625.4222]
+  - index: 33
+    size: [20, 20]
+    position: [354.5317, 963.7643]
+  - index: 34
+    size: [20, 20]
+    position: [475.6554, 229.3614]
+  - index: 35
+    size: [20, 20]
+    position: [538.1512, 654.7264]
+  - index: 36
+    size: [20, 20]
+    position: [802.0287, 255.2601]
+  - index: 37
+    size: [20, 20]
+    position: [1245.566, 559.6438]
+  - index: 38
+    size: [20, 20]
+    position: [934.7622, 231.563]
+  - index: 39
+    size: [20, 20]
+    position: [554.205, 747.6038]
+  - index: 40
+    size: [20, 20]
+    position: [1254.042, 296.7503]
+  - index: 41
+    size: [20, 20]
+    position: [367.4356, 739.295]
+  - index: 42
+    size: [20, 20]
+    position: [422.453, 36.94343]
+  - index: 43
+    size: [20, 20]
+    position: [481.4674, 880.9276]
+  - index: 44
+    size: [20, 20]
+    position: [1018.557, 58.81204]
+  - index: 45
+    size: [20, 20]
+    position: [451.6538, 859.9161]
+  - index: 46
+    size: [20, 20]
+    position: [818.0319, 323.606]
+  - index: 47
+    size: [20, 20]
+    position: [747.677, 204.4559]
+  - index: 48
+    size: [20, 20]
+    position: [587.389, 817.9671]
+  - index: 49
+    size: [20, 20]
+    position: [631.5535, 576.4578]
+  - index: 50
+    size: [20, 20]
+    position: [1216.759, 220.6162]
+  - index: 51
+    size: [20, 20]
+    position: [932.7233, 16.60794]
+  - index: 52
+    size: [20, 20]
+    position: [1212.669, 135.6987]
+  - index: 53
+    size: [20, 20]
+    position: [682.3475, 24.99636]
+  - index: 54
+    size: [20, 20]
+    position: [560.7241, 374.026]
+  - index: 55
+    size: [20, 20]
+    position: [1311.412, 230.601]
+  - index: 56
+    size: [20, 20]
+    position: [510.3677, 418.9211]
+  - index: 57
+    size: [20, 20]
+    position: [1195.521, 654.9214]
+  - index: 58
+    size: [20, 20]
+    position: [390.6092, 132.3344]
+  - index: 59
+    size: [20, 20]
+    position: [341.528, 720.0234]
+  - index: 60
+    size: [20, 20]
+    position: [1297.146, 839.1094]
+  - index: 61
+    size: [20, 20]
+    position: [496.2971, 817.6313]
+  - index: 62
+    size: [20, 20]
+    position: [1299.55, 586.4578]
+  - index: 63
+    size: [20, 20]
+    position: [824.0136, 368.8524]
+  - index: 64
+    size: [20, 20]
+    position: [1277.77, 597.3058]
+  - index: 65
+    size: [20, 20]
+    position: [730.3011, 953.9295]
+  - index: 66
+    size: [20, 20]
+    position: [1164.289, 862.937]
+  - index: 67
+    size: [20, 20]
+    position: [1330.588, 548.9611]
+  - index: 68
+    size: [20, 20]
+    position: [1105.096, 658.5249]
+  - index: 69
+    size: [20, 20]
+    position: [885.8447, 434.3241]
+  - index: 70
+    size: [20, 20]
+    position: [473.5416, 544.7102]
+  - index: 71
+    size: [20, 20]
+    position: [468.9333, 738.475]
+  - index: 72
+    size: [20, 20]
+    position: [406.002, 248.9202]
+  - index: 73
+    size: [20, 20]
+    position: [499.0714, 116.3651]
+  - index: 74
+    size: [20, 20]
+    position: [1099.055, 207.5336]
+  - index: 75
+    size: [20, 20]
+    position: [898.8305, 861.3404]
+  - index: 76
+    size: [20, 20]
+    position: [1036.374, 348.3186]
+  - index: 77
+    size: [20, 20]
+    position: [1127.624, 645.3585]
+  - index: 78
+    size: [20, 20]
+    position: [909.1079, 350.9268]
+  - index: 79
+    size: [20, 20]
+    position: [831.1306, 639.9385]
+  - index: 80
+    size: [20, 20]
+    position: [1048.376, 77.43516]
+  - index: 81
+    size: [20, 20]
+    position: [1389.244, 175.1987]
+  - index: 82
+    size: [20, 20]
+    position: [1345.35, 524.9971]
+  - index: 83
+    size: [20, 20]
+    position: [1290.598, 77.32999]
+  - index: 84
+    size: [20, 20]
+    position: [690.6956, 856.4105]
+  - index: 85
+    size: [20, 20]
+    position: [1251.645, 436.9778]
+  - index: 86
+    size: [20, 20]
+    position: [602.4667, 879.7162]
+  - index: 87
+    size: [20, 20]
+    position: [617.7789, 290.0387]
+  - index: 88
+    size: [20, 20]
+    position: [469.0801, 36.70249]
+  - index: 89
+    size: [20, 20]
+    position: [786.4169, 202.4435]
+  - index: 90
+    size: [20, 20]
+    position: [1015.937, 842.2081]
+  - index: 91
+    size: [20, 20]
+    position: [1066.544, 152.5387]
+  - index: 92
+    size: [20, 20]
+    position: [1382.303, 87.45728]
+  - index: 93
+    size: [20, 20]
+    position: [812.7839, 858.0565]
+  - index: 94
+    size: [20, 20]
+    position: [1134.279, 588.9626]
+  - index: 95
+    size: [20, 20]
+    position: [770.156, 426.4941]
+  - index: 96
+    size: [20, 20]
+    position: [1029.128, 446.522]
+  - index: 97
+    size: [20, 20]
+    position: [783.2256, 173.4236]
+  - index: 98
+    size: [20, 20]
+    position: [533.0956, 514.5643]
+  - index: 99
+    size: [20, 20]
+    position: [868.5654, 389.3787]
+  - index: 100
+    size: [20, 20]
+    position: [1190.572, 329.3329]
+  - index: 101
+    size: [20, 20]
+    position: [787.0031, 129.8672]
+  - index: 102
+    size: [20, 20]
+    position: [420.8279, 596.9561]
+  - index: 103
+    size: [20, 20]
+    position: [425.4465, 198.7506]
+  - index: 104
+    size: [20, 20]
+    position: [251.5314, 500.1927]
+  - index: 105
+    size: [20, 20]
+    position: [871.3027, 59.70497]
+  - index: 106
+    size: [20, 20]
+    position: [463.7896, 317.7869]
+  - index: 107
+    size: [20, 20]
+    position: [858.2451, 829.8716]
+  - index: 108
+    size: [20, 20]
+    position: [1208.594, 819.9306]
+  - index: 109
+    size: [20, 20]
+    position: [741.7732, 263.1076]
+  - index: 110
+    size: [20, 20]
+    position: [509.1104, 272.1436]
+  - index: 111
+    size: [20, 20]
+    position: [771.0533, 91.94736]
+  - index: 112
+    size: [20, 20]
+    position: [433.8403, 79.54552]
+  - index: 113
+    size: [20, 20]
+    position: [636.8923, 709.1362]
+  - index: 114
+    size: [20, 20]
+    position: [1285.971, 343.4816]
+  - index: 115
+    size: [20, 20]
+    position: [471.7563, 780.8636]
+  - index: 116
+    size: [20, 20]
+    position: [557.4205, 403.9133]
+  - index: 117
+    size: [20, 20]
+    position: [221.8138, 746.8749]
+  - index: 118
+    size: [20, 20]
+    position: [1001.175, 287.0005]
+  - index: 119
+    size: [20, 20]
+    position: [1021.066, 93.09869]
+  - index: 120
+    size: [20, 20]
+    position: [1291.515, 778.4036]
+  - index: 121
+    size: [20, 20]
+    position: [222.3589, 282.4213]
+  - index: 122
+    size: [20, 20]
+    position: [930.2016, 560.3751]
+  - index: 123
+    size: [20, 20]
+    position: [603.9775, 353.2564]
+  - index: 124
+    size: [20, 20]
+    position: [835.0347, 780.9099]
+  - index: 125
+    size: [20, 20]
+    position: [1237.783, 891.3054]
+  - index: 126
+    size: [20, 20]
+    position: [687.4478, 245.7757]
+  - index: 127
+    size: [20, 20]
+    position: [587.8395, 445.2677]
+  - index: 128
+    size: [20, 20]
+    position: [391.1821, 589.6365]
+  - index: 129
+    size: [20, 20]
+    position: [841.7471, 391.303]
+  - index: 130
+    size: [20, 20]
+    position: [351.7957, 229.6447]
+  - index: 131
+    size: [20, 20]
+    position: [685.8426, 85.15424]
+  - index: 132
+    size: [20, 20]
+    position: [1351.933, 919.8657]
+  - index: 133
+    size: [20, 20]
+    position: [665.3585, 922.8561]
+  - index: 134
+    size: [20, 20]
+    position: [438.1515, 111.1501]
+  - index: 135
+    size: [20, 20]
+    position: [953.6996, 916.4995]
+  - index: 136
+    size: [20, 20]
+    position: [511.4836, 717.7478]
+  - index: 137
+    size: [20, 20]
+    position: [264.21, 743.6097]
+  - index: 138
+    size: [20, 20]
+    position: [570.1363, 871.608]
+  - index: 139
+    size: [20, 20]
+    position: [1012.273, 542.1396]
+  - index: 140
+    size: [20, 20]
+    position: [296.2034, 200.5402]
+  - index: 141
+    size: [20, 20]
+    position: [1038.63, 837.3193]
+  - index: 142
+    size: [20, 20]
+    position: [917.0726, 275.4318]
+  - index: 143
+    size: [20, 20]
+    position: [424.8244, 224.7323]
+  - index: 144
+    size: [20, 20]
+    position: [853.2585, 429.8131]
+  - index: 145
+    size: [20, 20]
+    position: [718.9695, 899.833]
+  - index: 146
+    size: [20, 20]
+    position: [1362.39, 893.0253]
+  - index: 147
+    size: [20, 20]
+    position: [604.1176, 222.9478]
+  - index: 148
+    size: [20, 20]
+    position: [1379.235, 536.4462]
+  - index: 149
+    size: [20, 20]
+    position: [554.7442, 338.7558]
+  - index: 150
+    size: [20, 20]
+    position: [543.001, 577.4589]
+  - index: 151
+    size: [20, 20]
+    position: [266.0916, 856.1224]
+  - index: 152
+    size: [20, 20]
+    position: [712.4465, 179.0886]
+  - index: 153
+    size: [20, 20]
+    position: [263.2963, 96.96616]
+  - index: 154
+    size: [20, 20]
+    position: [1364.61, 806.5958]
+  - index: 155
+    size: [20, 20]
+    position: [863.1612, 916.657]
+  - index: 156
+    size: [20, 20]
+    position: [315.1953, 696.8992]
+  - index: 157
+    size: [20, 20]
+    position: [1153.216, 282.5424]
+  - index: 158
+    size: [20, 20]
+    position: [1328.205, 304.5563]
+  - index: 159
+    size: [20, 20]
+    position: [400.6304, 884.8936]
+  - index: 160
+    size: [20, 20]
+    position: [795.2235, 729.8987]
+  - index: 161
+    size: [20, 20]
+    position: [218.1409, 115.3288]
+  - index: 162
+    size: [20, 20]
+    position: [285.6202, 108.6872]
+  - index: 163
+    size: [20, 20]
+    position: [912.4255, 317.8358]
+  - index: 164
+    size: [20, 20]
+    position: [1079.577, 911.9853]
+  - index: 165
+    size: [20, 20]
+    position: [1172.972, 961.5189]
+  - index: 166
+    size: [20, 20]
+    position: [1378.401, 650.9639]
+  - index: 167
+    size: [20, 20]
+    position: [295.8841, 774.4785]
+  - index: 168
+    size: [20, 20]
+    position: [814.5495, 828.3594]
+  - index: 169
+    size: [20, 20]
+    position: [1341.005, 787.1463]
+  - index: 170
+    size: [20, 20]
+    position: [1137.587, 244.8141]
+  - index: 171
+    size: [20, 20]
+    position: [216.1207, 822.7048]
+  - index: 172
+    size: [20, 20]
+    position: [411.5542, 736.6042]
+  - index: 173
+    size: [20, 20]
+    position: [1251.511, 163.5296]
+  - index: 174
+    size: [20, 20]
+    position: [1186.967, 848.7547]
+circle_obstacles:
+  - index: 0
+    radius: 10
+    position: [1072.462, 386.3376]
+  - index: 1
+    radius: 10
+    position: [1319.642, 116.936]
+  - index: 2
+    radius: 10
+    position: [684.3801, 561.8955]
+  - index: 3
+    radius: 10
+    position: [662.855, 123.564]
+  - index: 4
+    radius: 10
+    position: [933.8206, 136.9812]
+  - index: 5
+    radius: 10
+    position: [1290.235, 171.8036]
+  - index: 6
+    radius: 10
+    position: [1354.835, 598.8297]
+  - index: 7
+    radius: 10
+    position: [906.7455, 129.2853]
+  - index: 8
+    radius: 10
+    position: [972.1102, 142.9384]
+  - index: 9
+    radius: 10
+    position: [776.768, 348.5929]
+  - index: 10
+    radius: 10
+    position: [349.0688, 553.3411]
+  - index: 11
+    radius: 10
+    position: [306.5922, 247.1497]
+  - index: 12
+    radius: 10
+    position: [840.2195, 931.1703]
+  - index: 13
+    radius: 10
+    position: [1193.11, 715.2195]
+  - index: 14
+    radius: 10
+    position: [1274.587, 685.2017]
+  - index: 15
+    radius: 10
+    position: [480.2652, 294.7324]
+  - index: 16
+    radius: 10
+    position: [1329.747, 671.1491]
+  - index: 17
+    radius: 10
+    position: [585.4152, 920.5942]
+  - index: 18
+    radius: 10
+    position: [1141.249, 900.7167]
+  - index: 19
+    radius: 10
+    position: [1175.071, 239.5898]
+  - index: 20
+    radius: 10
+    position: [808.7953, 522.1058]
+  - index: 21
+    radius: 10
+    position: [993.3593, 48.52631]
+  - index: 22
+    radius: 10
+    position: [986.1592, 702.8452]
+  - index: 23
+    radius: 10
+    position: [1168.593, 490.3871]
+  - index: 24
+    radius: 10
+    position: [535.3004, 849.7657]
+  - index: 25
+    radius: 10
+    position: [661.9458, 155.3363]
+  - index: 26
+    radius: 10
+    position: [821.4263, 166.754]
+  - index: 27
+    radius: 10
+    position: [537.1767, 783.6224]
+  - index: 28
+    radius: 10
+    position: [640.0325, 897.7903]
+  - index: 29
+    radius: 10
+    position: [1276.062, 740.3345]
+  - index: 30
+    radius: 10
+    position: [1297.037, 883.011]
+  - index: 31
+    radius: 10
+    position: [450.3854, 506.5948]
+  - index: 32
+    radius: 10
+    position: [555.0599, 722.0439]
+  - index: 33
+    radius: 10
+    position: [459.0679, 61.44314]
+  - index: 34
+    radius: 10
+    position: [500.3216, 157.7637]
+  - index: 35
+    radius: 10
+    position: [927.1373, 913.7462]
+  - index: 36
+    radius: 10
+    position: [565.1541, 653.2067]
+  - index: 37
+    radius: 10
+    position: [982.8042, 446.5443]
+  - index: 38
+    radius: 10
+    position: [1028.697, 926.6785]
+  - index: 39
+    radius: 10
+    position: [1052.548, 947.0676]
+  - index: 40
+    radius: 10
+    position: [790.8674, 503.5473]
+  - index: 41
+    radius: 10
+    position: [748.6187, 149.7099]
+  - index: 42
+    radius: 10
+    position: [660.9546, 429.5486]
+  - index: 43
+    radius: 10
+    position: [1013.15, 879.5714]
+  - index: 44
+    radius: 10
+    position: [938.1134, 452.7734]
+  - index: 45
+    radius: 10
+    position: [577.6894, 774.2789]
+  - index: 46
+    radius: 10
+    position: [932.6354, 413.7651]
+  - index: 47
+    radius: 10
+    position: [247.8464, 361.1663]
+  - index: 48
+    radius: 10
+    position: [662.7135, 491.0154]
+  - index: 49
+    radius: 10
+    position: [743.9927, 410.3395]
+  - index: 50
+    radius: 10
+    position: [419.6521, 457.4985]
+  - index: 51
+    radius: 10
+    position: [1245.755, 607.6359]
+  - index: 52
+    radius: 10
+    position: [315.2267, 826.9747]
+  - index: 53
+    radius: 10
+    position: [282.6281, 719.8333]
+  - index: 54
+    radius: 10
+    position: [815.8716, 234.5679]
+  - index: 55
+    radius: 10
+    position: [506.7116, 750.4261]
+  - index: 56
+    radius: 10
+    position: [1141.368, 933.2508]
+  - index: 57
+    radius: 10
+    position: [1016.091, 130.3644]
+  - index: 58
+    radius: 10
+    position: [994.6021, 796.5387]
+  - index: 59
+    radius: 10
+    position: [435.451, 335.3296]
+  - index: 60
+    radius: 10
+    position: [1118.491, 836.4627]
+  - index: 61
+    radius: 10
+    position: [1382.514, 152.3306]
+  - index: 62
+    radius: 10
+    position: [1101.957, 633.0161]
+  - index: 63
+    radius: 10
+    position: [293.9714, 497.5326]
+  - index: 64
+    radius: 10
+    position: [1104.855, 572.664]
+  - index: 65
+    radius: 10
+    position: [998.4602, 647.2529]
+  - index: 66
+    radius: 10
+    position: [421.0787, 165.3031]
+  - index: 67
+    radius: 10
+    position: [708.7289, 80.21469]
+  - index: 68
+    radius: 10
+    position: [583.6086, 12.15945]
+  - index: 69
+    radius: 10
+    position: [1290.725, 129.3488]
+  - index: 70
+    radius: 10
+    position: [659.7487, 387.1945]
+  - index: 71
+    radius: 10
+    position: [630.4944, 609.8463]
+  - index: 72
+    radius: 10
+    position: [257.157, 959.6135]
+  - index: 73
+    radius: 10
+    position: [692.1221, 911.8861]
+  - index: 74
+    radius: 10
+    position: [549.4299, 63.66708]
+  - index: 75
+    radius: 10
+    position: [1200.184, 785.5565]
+  - index: 76
+    radius: 10
+    position: [847.1684, 809.4167]
+  - index: 77
+    radius: 10
+    position: [1234.439, 195.822]
+  - index: 78
+    radius: 10
+    position: [1080.836, 293.5048]
+  - index: 79
+    radius: 10
+    position: [548.0522, 188.0527]
+  - index: 80
+    radius: 10
+    position: [565.634, 699.2621]
+  - index: 81
+    radius: 10
+    position: [231.8806, 847.3503]
+  - index: 82
+    radius: 10
+    position: [616.6355, 839.8884]
+  - index: 83
+    radius: 10
+    position: [857.2445, 577.024]
+  - index: 84
+    radius: 10
+    position: [1073.519, 179.9477]
+  - index: 85
+    radius: 10
+    position: [1112.55, 520.4285]
+  - index: 86
+    radius: 10
+    position: [1047.88, 654.8354]
+  - index: 87
+    radius: 10
+    position: [914.3315, 586.5937]
+  - index: 88
+    radius: 10
+    position: [714.9144, 814.6553]
+  - index: 89
+    radius: 10
+    position: [917.2172, 525.7239]
+  - index: 90
+    radius: 10
+    position: [725.2041, 605.2154]
+  - index: 91
+    radius: 10
+    position: [570.1897, 91.00168]
+  - index: 92
+    radius: 10
+    position: [980.5511, 177.6401]
+  - index: 93
+    radius: 10
+    position: [1036.009, 578.5425]
+  - index: 94
+    radius: 10
+    position: [306.7392, 752.496]
+  - index: 95
+    radius: 10
+    position: [495.4345, 590.6453]
+  - index: 96
+    radius: 10
+    position: [1360.045, 159.1769]
+  - index: 97
+    radius: 10
+    position: [1342.192, 335.6928]
+  - index: 98
+    radius: 10
+    position: [965.0583, 669.2545]
+  - index: 99
+    radius: 10
+    position: [972.2355, 283.2523]
+  - index: 100
+    radius: 10
+    position: [355.3506, 511.1417]
+  - index: 101
+    radius: 10
+    position: [679.7313, 213.615]
+  - index: 102
+    radius: 10
+    position: [869.7186, 84.51202]
+  - index: 103
+    radius: 10
+    position: [926.8305, 861.2153]
+  - index: 104
+    radius: 10
+    position: [1025.807, 493.5382]
+  - index: 105
+    radius: 10
+    position: [871.302, 161.6977]
+  - index: 106
+    radius: 10
+    position: [249.4113, 392.0474]
+  - index: 107
+    radius: 10
+    position: [238.0238, 218.1368]
+  - index: 108
+    radius: 10
+    position: [628.6823, 748.3736]
+  - index: 109
+    radius: 10
+    position: [1181.276, 38.11426]
+  - index: 110
+    radius: 10
+    position: [627.4694, 37.08721]
+  - index: 111
+    radius: 10
+    position: [1074.301, 96.8768]
+  - index: 112
+    radius: 10
+    position: [545.2715, 615.6328]
+  - index: 113
+    radius: 10
+    position: [1362.391, 359.508]
+  - index: 114
+    radius: 10
+    position: [1048.904, 307.6735]
+  - index: 115
+    radius: 10
+    position: [790.8884, 706.1546]
+  - index: 116
+    radius: 10
+    position: [801.2891, 78.4797]
+  - index: 117
+    radius: 10
+    position: [985.2264, 541.9739]
+  - index: 118
+    radius: 10
+    position: [772.51, 282.3003]
+  - index: 119
+    radius: 10
+    position: [517.1763, 97.10398]
+  - index: 120
+    radius: 10
+    position: [1383.804, 408.4034]
+  - index: 121
+    radius: 10
+    position: [1183.95, 147.3531]
+  - index: 122
+    radius: 10
+    position: [781.1205, 307.0327]
+  - index: 123
+    radius: 10
+    position: [1088.263, 26.42583]
+  - index: 124
+    radius: 10
+    position: [595.8274, 547.6385]
+  - index: 125
+    radius: 10
+    position: [1297.715, 663.6501]
+  - index: 126
+    radius: 10
+    position: [554.4567, 279.6724]
+  - index: 127
+    radius: 10
+    position: [1300.824, 274.2456]
+  - index: 128
+    radius: 10
+    position: [922.1781, 823.9548]
+  - index: 129
+    radius: 10
+    position: [304.0891, 389.9585]
+  - index: 130
+    radius: 10
+    position: [951.1921, 248.3834]
+  - index: 131
+    radius: 10
+    position: [591.067, 652.4309]
+  - index: 132
+    radius: 10
+    position: [532.8262, 287.8239]
+  - index: 133
+    radius: 10
+    position: [1216.623, 56.00333]
+  - index: 134
+    radius: 10
+    position: [694.6803, 147.6548]
+  - index: 135
+    radius: 10
+    position: [282.4511, 277.4728]
+  - index: 136
+    radius: 10
+    position: [1023.624, 804.8457]
+  - index: 137
+    radius: 10
+    position: [758.4852, 773.0444]
+  - index: 138
+    radius: 10
+    position: [356.5334, 408.6673]
+  - index: 139
+    radius: 10
+    position: [1056.212, 122.4302]
+  - index: 140
+    radius: 10
+    position: [628.0027, 527.7944]
+  - index: 141
+    radius: 10
+    position: [956.6281, 81.84088]
+  - index: 142
+    radius: 10
+    position: [1073.269, 61.26463]
+  - index: 143
+    radius: 10
+    position: [824.6951, 665.3622]
+  - index: 144
+    radius: 10
+    position: [1144.726, 498.9038]
+  - index: 145
+    radius: 10
+    position: [230.7682, 254.0822]
+  - index: 146
+    radius: 10
+    position: [1171.709, 687.742]
+  - index: 147
+    radius: 10
+    position: [1236.351, 641.7955]
+  - index: 148
+    radius: 10
+    position: [1072.246, 440.7434]
+  - index: 149
+    radius: 10
+    position: [1241.159, 723.1067]
+  - index: 150
+    radius: 10
+    position: [790.7139, 817.1437]
+  - index: 151
+    radius: 10
+    position: [707.238, 366.3405]
+  - index: 152
+    radius: 10
+    position: [702.616, 264.6537]
+  - index: 153
+    radius: 10
+    position: [712.6404, 210.2745]
+  - index: 154
+    radius: 10
+    position: [1342.898, 758.0516]
+  - index: 155
+    radius: 10
+    position: [1378.432, 301.9398]
+  - index: 156
+    radius: 10
+    position: [1215.585, 604.7123]
+  - index: 157
+    radius: 10
+    position: [810.3337, 934.1004]
+  - index: 158
+    radius: 10
+    position: [345.9111, 430.9516]
+  - index: 159
+    radius: 10
+    position: [1239.893, 46.86843]
+  - index: 160
+    radius: 10
+    position: [561.2672, 529.9443]
+  - index: 161
+    radius: 10
+    position: [625.0281, 129.3746]
+  - index: 162
+    radius: 10
+    position: [821.9181, 598.4769]
+  - index: 163
+    radius: 10
+    position: [522.7263, 47.29671]
+  - index: 164
+    radius: 10
+    position: [981.3109, 774.9509]
+  - index: 165
+    radius: 10
+    position: [375.1765, 497.6169]
+  - index: 166
+    radius: 10
+    position: [525.6284, 436.981]
+  - index: 167
+    radius: 10
+    position: [228.8208, 968.6331]
+  - index: 168
+    radius: 10
+    position: [1094.241, 317.098]
+  - index: 169
+    radius: 10
+    position: [569.2015, 966.3787]
+  - index: 170
+    radius: 10
+    position: [893.1658, 598.9501]
+  - index: 171
+    radius: 10
+    position: [1000.035, 360.1639]
+  - index: 172
+    radius: 10
+    position: [891.4141, 13.35453]
+  - index: 173
+    radius: 10
+    position: [350.2364, 11.84941]
+  - index: 174
+    radius: 10
+    position: [886.7224, 521.756]
