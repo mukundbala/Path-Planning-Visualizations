@@ -109,6 +109,7 @@ public:
     void GenerateGrids();
     void GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker);
     bool checkDiscretePoint(const Vec2D &grid_space_coord,std::vector<int> &discrete_point_tracker, int map_size_x);
+    bool checkCircleOverflow(const sf::Vector2f &centre , double radius ,  double x_lower , double x_higher , double y_lower , double y_higher);
     bool DataTest(); 
     //widgets
 

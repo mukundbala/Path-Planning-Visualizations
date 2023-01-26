@@ -355,7 +355,7 @@ void PlannerGUI::runObstacleSelector()
                 {
                     if ((selector_state_ == SelectorState::DrawCircle || selector_state_==SelectorState::DrawRectangle) && 
                         event.mouseButton.x >= x_lower && event.mouseButton.x < x_higher &&
-                        event.mouseButton.y >= y_lower &&event.mouseButton.y < y_higher)
+                        event.mouseButton.y >= y_lower && event.mouseButton.y < y_higher)
                     {
                         pos_mouse = true; //positive mouse press detected
                         pos_mouse_time = selector_clock.getElapsedTime().asMilliseconds(); //record time
@@ -376,13 +376,15 @@ void PlannerGUI::runObstacleSelector()
                             //hold time must be about 5 milliseconds
                             neg_mouse_pos.x = event.mouseButton.x;
                             neg_mouse_pos.y = event.mouseButton.y;
-                            double dist_between = sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
+                            double radius = sqrt((neg_mouse_pos.x-pos_mouse_pos.x)*(neg_mouse_pos.x-pos_mouse_pos.x)
                                                         +(neg_mouse_pos.y-pos_mouse_pos.y)*(neg_mouse_pos.y-pos_mouse_pos.y));
-                            if (dist_between >= 10)
+                            //check if the circle intersects anything
+                            bool does_circle_overflow = checkCircleOverflow(sf::Vector2f(pos_mouse_pos.x,pos_mouse_pos.y) ,radius , x_lower , x_higher , y_lower , y_higher);
+                            if (radius >= 10 && !does_circle_overflow)
                             {
                                 if (selector_state_ == SelectorState::DrawCircle)
                                 {
-                                CircleObstacle circ(dist_between/2,pos_mouse_pos);
+                                CircleObstacle circ(radius,pos_mouse_pos);
                                 app_data_->circle_obs_array.array.emplace_back(circ);
                                 std::cout<<"[Obstacle Selector]: Circle Obstacle Added!\n";
                                 }
@@ -856,7 +858,22 @@ void PlannerGUI::GenerateGrids()
         this->gui_window_selector_.draw(horizontal_line,2,sf::Lines);
     }
 }
+//returns true if overflow
+bool PlannerGUI::checkCircleOverflow(const sf::Vector2f &centre , double radius , double x_lower , double x_higher , double y_lower , double y_higher)
+{
+    //checking horizontal line collisions
+    const double radius_squared = radius * radius;
+    bool x_lower_check = ((x_lower - centre.x) * (x_lower - centre.x)) <= radius_squared; //true if intersect
+    bool x_higher_check = ((x_higher - centre.x) * (x_higher - centre.x)) <= radius_squared;
+    bool y_lower_check = ((y_lower - centre.y) * (y_lower - centre.y)) <= radius_squared;
+    bool y_higher_check = ((y_higher- centre.y) * (y_higher - centre.y)) <= radius_squared;
+    if (x_lower_check || x_higher_check || y_lower_check || y_higher_check)
+    {
+        return true;
+    }
+    return false;
 
+}
 void PlannerGUI::GenerateRandomDiscrete(std::vector<int> &discrete_point_tracker)
 {
     int successful_points = 0;
