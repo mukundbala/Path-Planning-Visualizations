@@ -19,24 +19,32 @@ void Node::cost(int cost)
     this->cost_ = cost;
 }
 
-void Node::setCoords(int x, int y)
+void Node::setGridCoords(int x, int y)
 {
     this->x_ = x;
     this->y_ = y;
+}
+
+void Node::setGlobalCoords(Vec2D &vec)
+{
+    this->pos.setCoords(vec.x(),vec.y());
 }
 
 int Node::x()
 {
     return this->x_;
 }
+
 int Node::y()
 {
     return this->y_;
 }
+
 int Node::cost()
 {
     return this->cost_;
 }
+
 int Node::operator[](int idx)
 {
     if (idx == 0)
