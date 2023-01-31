@@ -7,6 +7,7 @@
 #include <continuous_planner.hpp>
 #include <RRT.hpp>
 #include <RRTStar.hpp>
+#include <RRTMarch.hpp>
 #include <TGUI/TGUI.hpp>
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -115,6 +116,8 @@ std::string chosen_discrete_planner;
 
 public:
     DiscreteMap(std::shared_ptr<AppData> my_data);
+    ~DiscreteMap();
+
     void run();
 };
 

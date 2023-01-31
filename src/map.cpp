@@ -136,7 +136,13 @@ ContinuousMap::ContinuousMap(std::shared_ptr<AppData> my_data):BaseMap(my_data)
     else if (planner_name_ == "RRTStar")
     {
         continuous_planner_ = std::make_shared<RRTStar>(data_);
-        std::cout<<"RRT planner Initialized!\n";
+        std::cout<<"RRTStar planner Initialized!\n";
+    }
+
+    else if (planner_name_ == "RRTMarch")
+    {
+        continuous_planner_ = std::make_shared<RRTMarch>(data_);
+        std::cout<<"RRTMarch planner Initialized!\n";
     }
     std::cout<<"[ContinuousMap]:Continuous Map Built!\n";
 }
