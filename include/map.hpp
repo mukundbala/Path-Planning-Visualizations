@@ -2,6 +2,7 @@
 #define MAP_HPP
 
 #include <point.hpp>
+#include <node.hpp>
 #include <obstacles.hpp>
 #include <data.hpp>
 #include <continuous_planner.hpp>
@@ -111,12 +112,27 @@ public:
 class DiscreteMap:public BaseMap
 {
 private:
-int num_obs;
-std::string chosen_discrete_planner;
-
+    int num_obs;
+    Node start_node_;
+    Node end_node_;
+    std::string chosen_discrete_planner;
+    std::pair<int,int> resolution;
 public:
     DiscreteMap(std::shared_ptr<AppData> my_data);
     ~DiscreteMap();
+
+    void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
+    void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
+    void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
+    void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
+
+    void drawGrids();
+    void drawRect(const sf::Vector2f &centre_point, const sf::Color& color);
+    void drawStartEnd(Node &start_node , Node& end_node_);
+    void drawObstacles();
+    void drawNodes();
+    void drawEdges();
+    void drawPath();
 
     void run();
 };
