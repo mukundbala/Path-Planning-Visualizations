@@ -336,6 +336,9 @@ void PlannerGUI::runObstacleSelector()
     int num_cols = (app_data_->getMapX() / resolution_.first);
     std::vector<int> discrete_point_tester((app_data_->getMapX() / resolution_.first) * (app_data_->getMapY() / resolution_.second),0); 
     std::vector<Vec2D> points_selected;
+    bool discrete_selector = false;
+
+    gui_window_selector_.setKeyRepeatEnabled(false);
     while (gui_window_selector_.isOpen())
     {
         sf::Event event;
@@ -431,10 +434,32 @@ void PlannerGUI::runObstacleSelector()
 
             else if (app_data_->getChosenMap() == "discrete" && selector_state_ == SelectorState::DrawRectangle)
             {
-                if (event.type == sf::Event::MouseButtonPressed)
+                if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && !discrete_selector)
                 {
-                    double posx = event.mouseButton.x;
-                    double posy = event.mouseButton.y;
+                    discrete_selector = 1;
+                }
+
+                else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A && discrete_selector)
+                {
+                    discrete_selector = 0;
+                }
+
+            }
+        } //end of callback and event handling
+
+        if (!run_state_)
+        {
+            return; //we kill the program here if the window was closed
+        }
+
+        if (selector_state_ == SelectorState::DrawRectangle)
+        {
+            if (app_data_->getChosenMap() == "discrete")
+            {
+                if (discrete_selector)
+                {
+                    int posx = sf::Mouse::getPosition(gui_window_selector_).x;
+                    int posy = sf::Mouse::getPosition(gui_window_selector_).y;
                     bool isPointInRange = posx >= x_lower && posx < x_higher && posy >= y_lower && posy < y_higher;
                     if (isPointInRange)
                     {
@@ -452,14 +477,10 @@ void PlannerGUI::runObstacleSelector()
                     }
                 }
             }
-        } //end of callback and event handling
-
-        if (!run_state_)
-        {
-            return; //we kill the program here if the window was closed
         }
+
         //do actions are various states. 
-        if (selector_state_ == SelectorState::ResetLastCircle)
+        else if (selector_state_ == SelectorState::ResetLastCircle)
         {
             if (app_data_ ->getChosenMap() == "discrete")
             {
