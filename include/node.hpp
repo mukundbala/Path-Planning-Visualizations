@@ -8,14 +8,14 @@ class Node
 private:
     int x_;
     int y_;
-    int cost_;
+    double cost_;
     int idx_;
-    Vec2D pos; //the global non-grid coordinates
+    Vec2D pos_; //the global non-grid coordinates
 public:
     Node();
     Node(int x, int y);
-    Node(int x , int y , int cost);
-
+    Node(int x , int y , double cost);
+    Node(int x, int y, double cost , int idx);
     void setGridCoords(int x, int y);
 
     void setGlobalCoords(Vec2D& vec);
@@ -24,7 +24,7 @@ public:
 
     void y(int y);
 
-    void cost(int cost);
+    void cost(double cost);
 
     void idx(int idx);
 
@@ -34,10 +34,14 @@ public:
 
     int operator[](int idx);
 
-    int cost();
+    double cost();
     
     int idx();
-    
+
+    Vec2D getGlobalCoords();
+
     void print();
+
+    void clear();
 };
 #endif //NODE_HPP
