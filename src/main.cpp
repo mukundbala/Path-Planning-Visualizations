@@ -20,7 +20,19 @@ if (!isDataOk)
     std::cout<<"Exiting App\n";
     return 0;
 }
-std::shared_ptr<ContinuousMap> continuous_map = std::make_shared<ContinuousMap>(data);
-continuous_map->run();
+if (data->getChosenMap() == "continuous")
+{
+    std::shared_ptr<ContinuousMap> continuous_map = std::make_shared<ContinuousMap>(data);
+    continuous_map->run();
+}
+else if (data->getChosenMap() == "discrete")
+{
+    std::shared_ptr<DiscreteMap> discrete_map = std::make_shared<DiscreteMap>(data);
+    discrete_map->run();
+}
+else
+{
+    return 0;
+}
 return 0;
 }
