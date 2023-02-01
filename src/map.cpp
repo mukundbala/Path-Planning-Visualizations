@@ -115,6 +115,46 @@ void BaseMap::showCurrentState()
     std::cout<<"["+map_name_+"]:"+states_[n]<<"\n";
 }
 
+void BaseMap::drawPoint(const sf::Vector2f &pt,double radius,const sf::Color &color)
+{
+    sf::CircleShape point_to_draw;
+    point_to_draw.setFillColor(color);
+    point_to_draw.setRadius(radius);
+    point_to_draw.setOrigin(point_to_draw.getRadius(),point_to_draw.getRadius());
+    point_to_draw.setPosition(sf::Vector2f(pt.x,pt.y));
+    this->map_window_.draw(point_to_draw);
+}
+
+void BaseMap::drawPoint(const Vec2D &pt,double radius,const sf::Color &color)
+{
+    sf::CircleShape point_to_draw;
+    point_to_draw.setFillColor(color);
+    point_to_draw.setRadius(radius);
+    point_to_draw.setOrigin(point_to_draw.getRadius(),point_to_draw.getRadius());
+    point_to_draw.setPosition(sf::Vector2f(pt.x(),pt.y()));
+    this->map_window_.draw(point_to_draw);
+}
+
+void BaseMap::drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color &color)
+{
+    sf::Vertex line[2]=
+    {
+        sf::Vertex(sf::Vector2f(pt1.x,pt1.y),color),
+        sf::Vertex(sf::Vector2f(pt2.x,pt2.y),color)
+    };
+    this->map_window_.draw(line,2,sf::Lines);
+}
+
+void BaseMap::drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color &color)
+{
+    sf::Vertex line[2]=
+    {
+        sf::Vertex(sf::Vector2f(pt1.x(),pt1.y()),color),
+        sf::Vertex(sf::Vector2f(pt2.x(),pt2.y()),color)
+    };
+    this->map_window_.draw(line,2,sf::Lines);
+}
+
 ContinuousMap::ContinuousMap(std::shared_ptr<AppData> my_data):BaseMap(my_data)
 {
     num_circle_obs = my_data->circle_obs_array.array.size();
@@ -418,46 +458,6 @@ void ContinuousMap::run()
     
 }
 
-void ContinuousMap::drawPoint(const sf::Vector2f &pt,double radius,const sf::Color &color)
-{
-    sf::CircleShape point_to_draw;
-    point_to_draw.setFillColor(color);
-    point_to_draw.setRadius(radius);
-    point_to_draw.setOrigin(point_to_draw.getRadius(),point_to_draw.getRadius());
-    point_to_draw.setPosition(sf::Vector2f(pt.x,pt.y));
-    this->map_window_.draw(point_to_draw);
-}
-
-void ContinuousMap::drawPoint(const Vec2D &pt,double radius,const sf::Color &color)
-{
-    sf::CircleShape point_to_draw;
-    point_to_draw.setFillColor(color);
-    point_to_draw.setRadius(radius);
-    point_to_draw.setOrigin(point_to_draw.getRadius(),point_to_draw.getRadius());
-    point_to_draw.setPosition(sf::Vector2f(pt.x(),pt.y()));
-    this->map_window_.draw(point_to_draw);
-}
-
-void ContinuousMap::drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color &color)
-{
-    sf::Vertex line[2]=
-    {
-        sf::Vertex(sf::Vector2f(pt1.x,pt1.y),color),
-        sf::Vertex(sf::Vector2f(pt2.x,pt2.y),color)
-    };
-    this->map_window_.draw(line,2,sf::Lines);
-}
-
-void ContinuousMap::drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color &color)
-{
-    sf::Vertex line[2]=
-    {
-        sf::Vertex(sf::Vector2f(pt1.x(),pt1.y()),color),
-        sf::Vertex(sf::Vector2f(pt2.x(),pt2.y()),color)
-    };
-    this->map_window_.draw(line,2,sf::Lines);
-}
-
 void ContinuousMap::drawStartEnd()
 {
     drawPoint(this->start_pt_,this->point_radius_,START_COLOR);
@@ -509,3 +509,30 @@ void ContinuousMap::drawPath()
         drawLine(path_copy[i],path_copy[i+1],PATH_COLOR);
     }
 }
+
+/// Discrete Map Implementation
+
+DiscreteMap::DiscreteMap(std::shared_ptr<AppData> my_data) : BaseMap(my_data)
+{
+    num_obs = my_data->rect_obs_array.array.size();
+    Vec2D start_global_coords(-1,-1);
+    Vec2D end_global_coords(-1,-1);
+    start_node_.setGlobalCoords(start_global_coords);
+    start_node_.setGridCoords(-1,-1);
+    end_node_.setGlobalCoords(end_global_coords);
+    end_node_.setGridCoords(-1,-1);
+
+    //if planner_name == "BFS" ... remember to impl this!
+}
+
+DiscreteMap::~DiscreteMap()
+{
+    map_window_gui_.removeAllWidgets();
+    map_window_.close();
+}
+
+void DiscreteMap::run()
+{
+    //todo
+}
+

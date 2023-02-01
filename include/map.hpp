@@ -63,6 +63,10 @@ BaseMap(std::shared_ptr<AppData> my_data);
 void createControlPane();
 void drawControlPane();
 void showCurrentState();
+void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
+void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
+void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
+void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
 
 tgui::Label::Ptr message_label;
 tgui::Button::Ptr undo_selections_button;
@@ -96,11 +100,6 @@ public:
     ~ContinuousMap();
     
     void run();
-
-    void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
-    void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
-    void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
-    void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
     
     void drawStartEnd();
     void drawObstacles();
@@ -133,6 +132,9 @@ public:
     void drawNodes();
     void drawEdges();
     void drawPath();
+
+    //gridconversions
+
 
     void run();
 };

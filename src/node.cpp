@@ -19,6 +19,11 @@ void Node::cost(int cost)
     this->cost_ = cost;
 }
 
+void Node::idx(int idx)
+{
+    this->idx_ = idx;
+}
+
 void Node::setGridCoords(int x, int y)
 {
     this->x_ = x;
@@ -38,6 +43,11 @@ int Node::x()
 int Node::y()
 {
     return this->y_;
+}
+
+int Node::idx()
+{
+    return this->idx_;
 }
 
 int Node::cost()

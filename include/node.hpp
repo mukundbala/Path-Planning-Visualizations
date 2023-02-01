@@ -9,6 +9,7 @@ private:
     int x_;
     int y_;
     int cost_;
+    int idx_;
     Vec2D pos; //the global non-grid coordinates
 public:
     Node();
@@ -25,6 +26,8 @@ public:
 
     void cost(int cost);
 
+    void idx(int idx);
+
     int x();
 
     int y();
@@ -32,6 +35,8 @@ public:
     int operator[](int idx);
 
     int cost();
+    
+    int idx();
     
     void print();
 };

@@ -8,8 +8,12 @@ enum class DiscretePlannerState:unsigned short
     PathFound,
     PlanningComplete,
 };
+
 class DiscretePlanner
 {
+private:
+
+public:
 
 };
 
