@@ -4,13 +4,13 @@
 #include <cassert>
 #include <math.h>
 #include <memory>
-#include<iostream>
+#include <iostream>
 #include <SFML/Graphics.hpp>
 
 
 class Vec2D
 {
-    // Class to reporesent points and lines in the 2D coordinate system of SFML
+    // Class to represent points and lines in the 2D coordinate system of SFML
     // Origin of SFML is in the top left screen corner, +ve right and down
 private:
     double x_;
