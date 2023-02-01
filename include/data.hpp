@@ -2,6 +2,7 @@
 #define DATA_HPP
 #include <string>
 #include <obstacles.hpp>
+#include <node.hpp>
 #include <yaml-cpp/yaml.h>
 class AppData
 {
@@ -14,8 +15,13 @@ private:
     int map_x_; //width of the map. This will be the only thing a user can control
     int map_y_; //length of the map
     
+    //continuous planner_start_end
     Vec2D start_pt_; //start point of mapping
     Vec2D end_pt_; //end point of mapping
+
+    //discrete planner_start_end
+    Node start_node_;
+    Node end_node_;
 
     std::pair<int,int> resolution_; //resolution of discrete planner
     double EPS_; //Epsilon to do equality for floating/double data
@@ -50,6 +56,10 @@ public:
 
     Vec2D getEndPoint()const; //get the end point
 
+    Node getStartNode()const; //get the start node
+
+    Node getEndNode()const; //get the end node
+
     void setChosenMap(std::string type); //set chosen map name
     
     void setChosenPlanner(std::string type); //set chosen planner name
@@ -57,6 +67,10 @@ public:
     void setStart(Vec2D &start); //set start point
 
     void setEnd(Vec2D &end); //set end point
+
+    void setStartNode(Node &start_node);
+
+    void setEndNode(Node &end_node);
 
     std::vector<std::string> continuous_planners; //a vector containing continuous planner names. Matches input in yaml file
     

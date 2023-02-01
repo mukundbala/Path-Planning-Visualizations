@@ -32,7 +32,8 @@ AppData::AppData()
     end_pt_.setCoords(-1,-1);
     end_pt_.cost(-1);
     end_pt_.idx(-1);
-
+    start_node_.clear();
+    end_node_.clear();
     std::cout<<"[AppData]: List of planners loaded!\n";
 }
 
@@ -96,6 +97,16 @@ Vec2D AppData::getEndPoint()const
     return this->end_pt_;
 }
 
+Node AppData::getStartNode()const
+{
+    return this->start_node_;
+}
+
+Node AppData::getEndNode()const
+{
+    return this->end_node_;
+}
+
 std::pair<int,int> AppData::getResolution()const
 {
     return this->resolution_;
@@ -119,4 +130,14 @@ void AppData::setStart(Vec2D &start)
 void AppData::setEnd(Vec2D &end)
 {
     this->end_pt_ = end;
+}
+
+void AppData::setStartNode(Node &start_node)
+{
+    this->start_node_ = start_node;
+}
+
+void AppData::setEndNode(Node &end_node)
+{
+    this->end_node_ = end_node;
 }
