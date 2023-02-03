@@ -183,3 +183,13 @@ ContinuousPlannerState ContinuousPlanner::returnPlannerState(bool verbose)
     }
     return planner_state_;
 }
+
+Vec2D ContinuousPlanner::getStartPoint()
+{
+    return start_point_;
+}
+
+Vec2D ContinuousPlanner::getEndPoint()
+{
+    return end_point_;
+}

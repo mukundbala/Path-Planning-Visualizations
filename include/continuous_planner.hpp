@@ -50,13 +50,10 @@ bool doesLineCollideRectangle(Vec2D &p1, Vec2D &p2);
 bool doesLineCollideCircle(Vec2D &tree_node, Vec2D &stepped_point);
 
 ContinuousPlannerState returnPlannerState(bool verbose);
-Vec2D getStartPoint()
-{
-    return start_point_;
-}
-Vec2D getEndPoint()
-{
-    return end_point_;
-}
+
+Vec2D getStartPoint();
+
+Vec2D getEndPoint();
+
 };
 #endif //CONTINUOUS_PLANNER_HPP
