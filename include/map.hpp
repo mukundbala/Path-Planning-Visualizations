@@ -5,6 +5,7 @@
 #include <node.hpp>
 #include <obstacles.hpp>
 #include <data.hpp>
+#include <utils.hpp>
 #include <continuous_planner.hpp>
 #include <RRT.hpp>
 #include <RRTStar.hpp>
@@ -36,65 +37,66 @@ enum class MapState:unsigned short
 class BaseMap
 {
 protected:
-//resources
-std::shared_ptr<AppData> data_;
-sf::RenderWindow map_window_;
-tgui::GuiSFML map_window_gui_;
-tgui::Theme dark_theme_;
+    //resources
+    std::shared_ptr<AppData> data_;
+    sf::RenderWindow map_window_;
+    tgui::GuiSFML map_window_gui_;
+    tgui::Theme dark_theme_;
 
-//data pertaining to the map
-int map_x_;
-int map_y_;
-int control_pane_width_;
-int window_x_;
-int window_y_;
-int clicks_;
+    //data pertaining to the map
+    int map_x_; //width of the map
+    int map_y_; //height of the map
+    int control_pane_width_; //width of control pane
+    int x_lower_ , y_lower_;
+    int x_upper_ , y_upper_;
+    int clicks_;
 
-std::string planner_name_;
-std::string map_name_;
+    std::string planner_name_;
+    std::string map_name_;
 
-MapState program_state_;
-std::vector<std::string> states_; //string representation of program states
+    MapState program_state_;
+    std::vector<std::string> states_; //string representation of program states
 
 public:
-BaseMap(std::shared_ptr<AppData> my_data);
-~BaseMap();
+    BaseMap(std::shared_ptr<AppData> my_data);
+    ~BaseMap();
 
-void createControlPane();
-void drawControlPane();
-void showCurrentState();
-void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
-void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
-void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
-void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
+    void createControlPane();
+    void drawControlPane();
+    void showCurrentState();
 
-tgui::Label::Ptr message_label;
-tgui::Button::Ptr undo_selections_button;
-tgui::Button::Ptr start_planning_button;
-tgui::Button::Ptr show_path_button;
-tgui::Button::Ptr show_all_button;
-tgui::Button::Ptr quit_button;
-tgui::Button::Ptr confirm_points_button;
-sf::RectangleShape control_pane_background;
+    void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
+    void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
+    void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
+    void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
 
-sf::Color LINE_COLOR;
-sf::Color POINT_COLOR;
-sf::Color WINDOW_COLOR;
-sf::Color START_COLOR;
-sf::Color END_COLOR;
-sf::Color PATH_COLOR;
-sf::Color CONTROL_PANE_COLOR;
+    tgui::Label::Ptr message_label;
+    tgui::Button::Ptr undo_selections_button;
+    tgui::Button::Ptr start_planning_button;
+    tgui::Button::Ptr show_path_button;
+    tgui::Button::Ptr show_all_button;
+    tgui::Button::Ptr quit_button;
+    tgui::Button::Ptr confirm_points_button;
+    sf::RectangleShape control_pane_background;
+
+    sf::Color LINE_COLOR;
+    sf::Color POINT_COLOR;
+    sf::Color WINDOW_COLOR;
+    sf::Color START_COLOR;
+    sf::Color END_COLOR;
+    sf::Color PATH_COLOR;
+    sf::Color CONTROL_PANE_COLOR;
 
 };
 
 class ContinuousMap:public BaseMap
 {
 private:
-int num_circle_obs, num_rect_obs, num_total_obs;
-std::shared_ptr<ContinuousPlanner> continuous_planner_;
-Vec2D start_pt_;
-Vec2D end_pt_;
-double point_radius_;
+    int num_circle_obs, num_rect_obs, num_total_obs;
+    std::shared_ptr<ContinuousPlanner> continuous_planner_;
+    Vec2D start_pt_;
+    Vec2D end_pt_;
+    double point_radius_;
 public:
     ContinuousMap(std::shared_ptr<AppData> my_data);
     ~ContinuousMap();
@@ -115,24 +117,32 @@ private:
     Node start_node_;
     Node end_node_;
     std::string chosen_discrete_planner;
-    std::pair<int,int> resolution;
+    //std::shared_ptr<DiscretePlanner> discrete_planner_;
+    //map specific information
+    std::pair<int,int> resolution_;
+    sf::Vector2f resolution_v2f_;
+    int num_cols_;
+    int num_rows_;
+    int possible_points_;
+    std::vector<int> grid_state_;
+
 public:
     DiscreteMap(std::shared_ptr<AppData> my_data);
     ~DiscreteMap();
 
-    void drawPoint(const sf::Vector2f &pt, double radius, const sf::Color& color);
-    void drawPoint(const Vec2D &pt,double radius, const sf::Color& color);
-    void drawLine(const sf::Vector2f &pt1, const sf::Vector2f &pt2, const sf::Color& color);
-    void drawLine(const Vec2D &pt1, const Vec2D &pt2, const sf::Color& color);
-
     void drawGrids();
-    void drawRect(const sf::Vector2f &centre_point, const sf::Color& color);
-    void drawStartEnd(Node &start_node , Node& end_node_);
+    void drawRect(Node &selected_node , const sf::Vector2f &size , const sf::Color& color);
+    void drawStartEnd();
     void drawObstacles();
     void drawNodes();
     void drawEdges();
     void drawPath();
 
+    //frame conversions
+    Node GlobalToGrid(Vec2D &vec);
+    Node GlobalToGrid(sf::Vector2f &vec);
+    Vec2D GridToGlobal(Node &node);
+    int flattenGrid(Node &node);
     //gridconversions
 
 

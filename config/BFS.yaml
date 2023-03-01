@@ -1,0 +1,2 @@
+planner_name: BFS
+neighbour: cardinal ##cardinal or octile

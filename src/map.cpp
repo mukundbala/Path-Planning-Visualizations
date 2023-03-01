@@ -5,13 +5,16 @@ BaseMap::BaseMap(std::shared_ptr<AppData>  my_data) : data_{my_data}
     map_x_ = data_->getMapX();
     map_y_ = data_->getMapY();
     control_pane_width_ = data_->getControlPaneWidth();
-    window_x_ = map_x_ + control_pane_width_;
-    window_y_ = map_y_;
+    //these are widths, converting this to 0 indexed values requires minus 1
+    x_lower_ = control_pane_width_;
+    y_lower_ = 0;
+    x_upper_ = map_x_ + control_pane_width_;
+    y_upper_ = map_y_;
     planner_name_ = data_->getChosenPlanner();
     map_name_ = data_->getChosenMap();
     toupper(map_name_[0]);
     dark_theme_.setDefault("themes/Black.txt");
-    map_window_.create(sf::VideoMode(window_x_,window_y_,32),planner_name_);
+    map_window_.create(sf::VideoMode(x_upper_,y_upper_,32),planner_name_);
     map_window_gui_.setTarget(map_window_);
     clicks_ = 0;
     program_state_ = MapState::NotStarted;
@@ -515,14 +518,30 @@ void ContinuousMap::drawPath()
 DiscreteMap::DiscreteMap(std::shared_ptr<AppData> my_data) : BaseMap(my_data)
 {
     num_obs = my_data->rect_obs_array.array.size();
+    resolution_ = my_data->getResolution();
+    num_cols_ = my_data->getMapX() / resolution_.first;
+    num_rows_ = my_data->getMapY() / resolution_.second;
+    possible_points_ = num_cols_ * num_rows_;
+    grid_state_.reserve(possible_points_);
+    for (auto &obs : my_data->rect_obs_array.array)
+    {
+        sf::Vector2f pos = obs.getPosition();
+        Node node = GlobalToGrid(pos);
+        int flat = flattenGrid(node);
+        grid_state_[flat] = 1;
+    }
+    resolution_v2f_ = {(float)resolution_.first , (float)resolution_.second};
     Vec2D start_global_coords(-1,-1);
     Vec2D end_global_coords(-1,-1);
     start_node_.setGlobalCoords(start_global_coords);
     start_node_.setGridCoords(-1,-1);
     end_node_.setGlobalCoords(end_global_coords);
     end_node_.setGridCoords(-1,-1);
-
-    //if planner_name == "BFS" ... remember to impl this!
+    chosen_discrete_planner = planner_name_;
+    // if (planner_name_ == "BFS")
+    // {
+    //     discrete_planner_ = std::make_shared<BFS>(data_);
+    // }
 }
 
 DiscreteMap::~DiscreteMap()
@@ -533,6 +552,276 @@ DiscreteMap::~DiscreteMap()
 
 void DiscreteMap::run()
 {
-    //todo
+    while (map_window_.isOpen())
+    {
+        sf::Event event;
+        while (map_window_.pollEvent(event))
+        {
+            map_window_gui_.handleEvent(event);
+            if (event.type == sf::Event::Closed)
+            {
+                this->~DiscreteMap();
+            }
+            if (event.type == sf::Event::MouseButtonPressed && program_state_==MapState::NotStarted)
+            {
+                sf::Vector2f mouse_position(event.mouseButton.x,event.mouseButton.y);
+                bool mouse_in_range = mouse_position.x >= x_lower_ && mouse_position.x < x_upper_ && mouse_position.y >= y_lower_ && mouse_position.y < y_upper_;
+                if (mouse_in_range)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left && start_node_.x()<0)
+                    {
+                        start_node_ = GlobalToGrid(mouse_position);
+                        Vec2D global = GridToGlobal(start_node_);
+                        start_node_.setGlobalCoords(global);
+                        start_node_.cost(0);
+                        int start_flat = flattenGrid(start_node_);
+                        if (!grid_state_.at(start_flat))
+                        {
+                            grid_state_[start_flat] = 1; //occupied
+                            clicks_++;
+                        }
+                        else
+                        {
+                            std::cout<<"[DiscreteMap]: Choose Unoccupied Cell!\n";
+                            start_node_.clear();
+                        }
+                    }
+                    else if (event.mouseButton.button == sf::Mouse::Right && end_node_.x()<0)
+                    {
+                        end_node_ = GlobalToGrid(mouse_position);
+                        Vec2D global = GridToGlobal(end_node_);
+                        end_node_.setGlobalCoords(global);
+                        end_node_.cost(0);
+                        int end_flat = flattenGrid(end_node_);
+                        if (!grid_state_.at(end_flat))
+                        {
+                            grid_state_[end_flat] = 1; //occupied
+                            clicks_++;
+                        }
+                        else
+                        {
+                            std::cout<<"[DiscreteMap]: Choose Unoccupied Cell!\n";
+                            end_node_.clear();
+                        }
+                    }
+                }
+            }
+        } // End of callback processing
+
+        if (program_state_ == MapState::NotStarted)
+        {
+            message_label -> setText("Please select start point (right mouse click) and end point (left mouse click)");
+            
+            //disabling buttons to prevent evil user inputs
+            //the only way the user can progress is to select the start and end points or quit
+            start_planning_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+
+            //enabling only selected buttons
+            undo_selections_button -> setEnabled(true);
+            confirm_points_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawGrids();
+
+            if (clicks_ <= 2)
+            {
+                if (start_node_.x()>=0)
+                {
+                    drawRect(start_node_ , resolution_v2f_ , START_COLOR);
+                }
+
+                if (end_node_.x() >=0)
+                {
+                    drawRect(end_node_ , resolution_v2f_ , END_COLOR);
+                }
+            }
+            map_window_.display();
+        }
+
+        else if (program_state_ == MapState::UndoSelections)
+        {
+            message_label -> setText("Right click for start point, left click for end point. Once selected, you may confirm your selection or undo your selection");
+            //disabling buttons to prevent evil user inputs
+            start_planning_button -> setEnabled(false);
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+            //enabling only selected buttons
+            undo_selections_button -> setEnabled(true);
+            confirm_points_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+
+            //actions at this state
+            int start_flat = flattenGrid(start_node_);
+            int end_flat = flattenGrid(end_node_);
+            grid_state_[start_flat] = 0;
+            grid_state_[end_flat] = 0;
+            start_node_.clear();
+            end_node_.clear();
+            clicks_ = 0;
+            program_state_ = MapState::NotStarted;
+
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawGrids();
+            map_window_.display();
+        }
+
+        else if (program_state_ == MapState::ConfirmPoints)
+        {
+            if (start_node_.x() == -1 || end_node_.x() == -1)
+            {
+                message_label -> setText("Please finish selecting start and end points!");
+                program_state_ = MapState::NotStarted;
+            }
+            else
+            {
+                message_label -> setText("Start and end nodes confirmed!. Preparing Planner!");
+                data_->setStartNode(start_node_);
+                data_->setEndNode(end_node_);
+                // discrete_planner_->updateBasePlannerStartEndNode();
+                // discrete_planner_->updateDerivedPlannerTree(grid_state_);
+                std::cout<<"[DiscreteMap]: Start and End points updated in planner\n";
+                program_state_ = MapState::PrepComplete;
+            }
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawGrids();
+            map_window_.display();
+        }
+
+        else if (program_state_ == MapState::PrepComplete)
+        {
+            message_label -> setText("Planner Prepared!. You may start the planner.");
+            //disabling buttons to prevent evil user inputs
+            show_path_button -> setEnabled(false);
+            show_all_button -> setEnabled(false);
+            undo_selections_button -> setEnabled(false);
+            confirm_points_button-> setEnabled(false);
+            //enabling only selected buttons
+            start_planning_button -> setEnabled(true);
+            quit_button -> setEnabled(true);
+
+            //drawing our frame
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            drawStartEnd();
+            drawGrids();
+            map_window_.display();
+        }
+
+        else if (program_state_ == MapState::Quit)
+        {
+            message_label -> setText("Ending planner now. Goodbye!");
+            map_window_.clear();
+            drawControlPane();
+            drawObstacles();
+            sf::sleep(sf::seconds(1));
+            map_window_.display();
+            break;
+        }
+    }
 }
 
+void DiscreteMap::drawGrids()
+{
+    for (int i=x_lower_ + resolution_.first; i < x_upper_ ; i += resolution_.first)
+    {
+        sf::Vector2f pt1(i,y_lower_);
+        sf::Vector2f pt2(i,y_upper_-1);
+        sf::Vertex vertical_line[]=
+        {
+            sf::Vertex(pt1),
+            sf::Vertex(pt2)
+        };
+        this->map_window_.draw(vertical_line,2,sf::Lines);
+    }
+    for (int i=y_lower_+resolution_.second; i<y_upper_ ; i+=resolution_.second)
+    {
+        sf::Vector2f pt1(x_lower_,i);
+        sf::Vector2f pt2(x_upper_-1,i);
+        sf::Vertex horizontal_line[]=
+        {
+            sf::Vertex(pt1),
+            sf::Vertex(pt2)
+        };
+        this->map_window_.draw(horizontal_line,2,sf::Lines);
+    }
+}
+
+void DiscreteMap::drawRect(Node &selected_node , const sf::Vector2f &size , const sf::Color& color)
+{
+    //given some centre point, we need to draw the rectangle
+    sf::RectangleShape rect;
+    rect.setOrigin(size.x / 2 , size.y / 2);
+    Vec2D position_v2d = selected_node.getGlobalCoords();
+    sf::Vector2f position = utils::Vec2DToV2f(position_v2d);
+    rect.setPosition(position);
+    rect.setFillColor(color);
+    rect.setSize(size);
+    map_window_.draw(rect);
+}
+
+void DiscreteMap::drawStartEnd()
+{
+    drawRect(start_node_ , resolution_v2f_ , START_COLOR);
+    drawRect(end_node_ , resolution_v2f_ , END_COLOR);
+}
+
+void DiscreteMap::drawObstacles()
+{
+    for (auto& rect_obs : data_->rect_obs_array.array)
+    {
+        map_window_.draw(rect_obs.shape);
+    }
+}
+
+Node DiscreteMap::GlobalToGrid(Vec2D &vec)
+{
+    Node grid_node;
+    int x = (vec.x() - x_lower_) / resolution_.first;
+    int y = (vec.y() - y_lower_) / resolution_.second;
+
+    x = x == (x_upper_ / resolution_.first) ?  x - 1 : x;
+    y = y == (y_upper_ / resolution_.second) ? y - 1 : y;
+
+    grid_node.setGridCoords(x,y);
+    return grid_node;
+}
+
+Node DiscreteMap::GlobalToGrid(sf::Vector2f &vec)
+{
+    Node grid_node;
+    int x = (vec.x - x_lower_) / resolution_.first;
+    int y = (vec.y - y_lower_) / resolution_.second;
+
+    x = x == (x_upper_ / resolution_.first) ?  x - 1 : x;
+    y = y == (y_upper_ / resolution_.second) ? y - 1 : y;
+
+    grid_node.setGridCoords(x,y);
+    return grid_node;
+}
+
+Vec2D DiscreteMap::GridToGlobal(Node &node)
+{
+    Vec2D global_coords; //origin
+    global_coords.x(x_lower_ + (node.x() * resolution_.first) + (resolution_.first / 2));
+    global_coords.y(y_lower_ + (node.y() * resolution_.second) + (resolution_.second / 2));
+    return global_coords;
+}
+
+int DiscreteMap::flattenGrid(Node &node)
+{
+    int flattened = (num_cols_ * node.y()) + node.x();
+    return flattened;
+}
+//to do: drawNodes, drawEdges , drawPath
